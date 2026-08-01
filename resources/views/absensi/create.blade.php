@@ -211,7 +211,7 @@ function setGps(lat, lng) {
         lngEl.value = lng;
         locEl.value = 'GPS Terverifikasi';
 
-        // Tampilkan status berhasil — tanpa koordinat
+        // Tampilkan status berhasil : tanpa koordinat
         if (status) {
             status.style.background = '#f0fdf4';
             status.style.borderColor = '#86efac';
