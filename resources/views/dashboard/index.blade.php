@@ -310,7 +310,7 @@
                     <td style="font-size:12px;">
                         {{ $izin->tanggal_mulai->format('d M') }}
                         @if($izin->tanggal_mulai != $izin->tanggal_selesai)
-                        — {{ $izin->tanggal_selesai->format('d M Y') }}
+                        - {{ $izin->tanggal_selesai->format('d M Y') }}
                         @else
                         {{ $izin->tanggal_mulai->format('Y') }}
                         @endif
