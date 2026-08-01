@@ -137,7 +137,7 @@
                 </a>
             </div>
 
-            {{-- Submit — tidak submit langsung, buka modal captcha --}}
+            {{-- Submit - tidak submit langsung, buka modal captcha --}}
             <button type="button" id="btnLogin" onclick="openCaptchaModal()"
                     class="btn btn-primary" style="width:100%;justify-content:center;padding:11px;font-size:13px;">
                 <span id="btnText">Masuk</span>
