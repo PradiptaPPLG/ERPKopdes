@@ -237,16 +237,14 @@
                         $sangat = (int)($d->sangat_terlambat ?? 0);
                         $hadir  = (int)($d->hadir ?? 0);
 
-                        if ($hadir > 0 && $sangat > 0) {
-                            $cls = 'heatmap-warn';   // hadir tapi sangat terlambat
-                        } elseif ($sangat > 0) {
-                            $cls = 'heatmap-danger'; // sangat terlambat
+                        if ($sangat > 0) {
+                            $cls = 'heatmap-danger'; // Sangat Terlambat -> Merah
                         } elseif ($hadir > 0 && (int)($d->terlambat ?? 0) > 0) {
-                            $cls = 'heatmap-warn';   // hadir tapi terlambat ringan
+                            $cls = 'heatmap-warn';   // Terlambat Ringan -> Kuning
                         } elseif ($hadir > 0) {
-                            $cls = 'heatmap-5';      // hadir tepat waktu
+                            $cls = 'heatmap-5';      // Hadir tepat waktu -> Hijau
                         } else {
-                            $cls = 'heatmap-danger'; // tidak hadir
+                            $cls = 'heatmap-danger'; // Tidak hadir -> Merah
                         }
                     } elseif ($isFuture) {
                         $cls = 'heatmap-0';          // belum terjadi
