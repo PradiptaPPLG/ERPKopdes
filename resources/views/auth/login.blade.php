@@ -2,6 +2,38 @@
 @section('title', 'Login')
 
 @section('content')
+
+{{-- reCAPTCHA Modal Overlay --}}
+<div id="captchaModal" style="display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.55);backdrop-filter:blur(3px);align-items:center;justify-content:center;">
+    <div style="background:#fff;border-radius:12px;padding:32px 28px;box-shadow:0 20px 60px rgba(0,0,0,0.25);text-align:center;max-width:340px;width:90%;animation:popIn 0.2s ease;">
+        <div style="width:48px;height:48px;background:#fff3f3;border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 16px;">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="#cc0000" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
+            </svg>
+        </div>
+        <h3 style="font-size:15px;font-weight:700;color:#1a1a1a;margin-bottom:6px;">Verifikasi Keamanan</h3>
+        <p style="font-size:12px;color:#888;margin-bottom:20px;">Selesaikan verifikasi di bawah untuk melanjutkan login.</p>
+
+        {{-- reCAPTCHA v2 Checkbox Widget --}}
+        <div style="display:flex;justify-content:center;margin-bottom:16px;">
+            <div class="g-recaptcha"
+                 id="recaptchaWidget"
+                 data-sitekey="{{ config('services.recaptcha.site_key') }}"
+                 data-callback="onCaptchaSuccess"
+                 data-expired-callback="onCaptchaExpired"></div>
+        </div>
+
+        <div id="captchaError" style="display:none;font-size:11px;color:#cc0000;margin-bottom:10px;">
+            Verifikasi gagal atau kedaluwarsa, silakan coba lagi.
+        </div>
+
+        <button type="button" onclick="closeCaptchaModal()"
+                style="font-size:12px;color:#999;background:none;border:none;cursor:pointer;text-decoration:underline;">
+            Batal
+        </button>
+    </div>
+</div>
+
 <div style="display:flex;width:960px;min-height:580px;background:#fff;border-radius:8px;box-shadow:0 1px 3px rgba(0,0,0,0.08),0 4px 12px rgba(0,0,0,0.04);overflow:hidden;margin:20px auto;">
 
     {{-- LEFT: Brand Panel --}}
@@ -51,6 +83,8 @@
         {{-- Login Form --}}
         <form method="POST" action="{{ route('login.post') }}" id="loginForm">
             @csrf
+            {{-- Hidden: token dari captcha akan diisi oleh onCaptchaSuccess --}}
+            <input type="hidden" name="g-recaptcha-response" id="captchaToken">
 
             {{-- Email --}}
             <div class="form-group">
@@ -103,8 +137,8 @@
                 </a>
             </div>
 
-            {{-- Submit --}}
-            <button type="submit" id="btnLogin"
+            {{-- Submit — tidak submit langsung, buka modal captcha --}}
+            <button type="button" id="btnLogin" onclick="openCaptchaModal()"
                     class="btn btn-primary" style="width:100%;justify-content:center;padding:11px;font-size:13px;">
                 <span id="btnText">Masuk</span>
                 <svg id="btnSpinner" xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" style="display:none;animation:spin 0.8s linear infinite;">
@@ -130,21 +164,79 @@
 </div>
 
 <style>
-@keyframes spin { to { transform: rotate(360deg); } }
+@keyframes spin   { to { transform: rotate(360deg); } }
+@keyframes popIn  { from { transform: scale(0.85); opacity:0; } to { transform: scale(1); opacity:1; } }
 @media (max-width: 980px) {
     div[style*="width:960px"] { flex-direction:column; width:90%; max-width:420px; }
     div[style*="width:420px"] { width:100%; padding:35px 30px; }
     div[style*="flex:1;padding:60px"] { padding:35px 30px; }
 }
 </style>
+
 <script>
 function togglePassword() {
     const pwd = document.getElementById('password');
     pwd.type = pwd.type === 'password' ? 'text' : 'password';
 }
-document.getElementById('loginForm').addEventListener('submit', function() {
-    document.getElementById('btnText').style.opacity = '0';
+
+/* ── CAPTCHA MODAL ─────────────────────────────── */
+function openCaptchaModal() {
+    // Validasi form dulu sebelum buka modal
+    const email    = document.getElementById('email').value.trim();
+    const password = document.getElementById('password').value.trim();
+
+    if (!email || !password) {
+        document.getElementById('loginForm').reportValidity();
+        return;
+    }
+
+    // Reset captcha widget agar selalu fresh
+    if (typeof grecaptcha !== 'undefined') {
+        grecaptcha.reset();
+    }
+    document.getElementById('captchaError').style.display = 'none';
+
+    // Tampilkan modal
+    const modal = document.getElementById('captchaModal');
+    modal.style.display = 'flex';
+}
+
+function closeCaptchaModal() {
+    document.getElementById('captchaModal').style.display = 'none';
+    if (typeof grecaptcha !== 'undefined') {
+        grecaptcha.reset();
+    }
+}
+
+// Dipanggil Google setelah user berhasil menyelesaikan captcha
+function onCaptchaSuccess(token) {
+    // Tutup modal
+    document.getElementById('captchaModal').style.display = 'none';
+
+    // Isi hidden input dengan token
+    document.getElementById('captchaToken').value = token;
+
+    // Tampilkan spinner pada tombol
+    document.getElementById('btnText').style.opacity  = '0';
     document.getElementById('btnSpinner').style.display = 'inline';
+
+    // Submit form
+    document.getElementById('loginForm').submit();
+}
+
+// Dipanggil jika token captcha kedaluwarsa
+function onCaptchaExpired() {
+    document.getElementById('captchaError').style.display = 'block';
+}
+
+// Tutup modal jika klik overlay (luar kotak)
+document.getElementById('captchaModal').addEventListener('click', function(e) {
+    if (e.target === this) closeCaptchaModal();
+});
+
+// Tutup modal dengan Escape
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') closeCaptchaModal();
 });
 </script>
 @endsection

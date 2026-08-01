@@ -37,13 +37,21 @@ class DashboardController extends Controller
             ->get();
 
         // ── Heatmap data (current month) ─────────────────────────
-        $heatmapData = Absensi::selectRaw('tanggal, COUNT(*) as total,
+        // Admin: agregat semua karyawan. Karyawan: hanya data milik sendiri.
+        $heatmapQuery = Absensi::selectRaw('tanggal,
+                COUNT(*) as total,
                 SUM(status_kehadiran IN ("hadir","terlambat","sangat_terlambat")) as hadir,
                 SUM(status_kehadiran = "terlambat") as terlambat,
                 SUM(status_kehadiran = "sangat_terlambat") as sangat_terlambat,
                 SUM(status_kehadiran = "alpa") as alpa')
             ->whereYear('tanggal', $year)
-            ->whereMonth('tanggal', $month)
+            ->whereMonth('tanggal', $month);
+
+        if (! $user->isAdmin()) {
+            $heatmapQuery->where('user_id', $user->id);
+        }
+
+        $heatmapData = $heatmapQuery
             ->groupBy('tanggal')
             ->get()
             ->keyBy(fn($r) => Carbon::parse($r->tanggal)->format('Y-m-d'));

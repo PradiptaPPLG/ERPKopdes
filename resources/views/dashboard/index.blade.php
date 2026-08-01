@@ -147,7 +147,8 @@
 </div>
 
 {{-- ── Two column: Absensi list + Heatmap ─────────────────── --}}
-<div style="display:grid;grid-template-columns:1fr 340px;gap:20px;margin-bottom:20px;">
+{{-- Admin: full width (no heatmap). Karyawan: 2-column with heatmap --}}
+<div style="display:grid;grid-template-columns:{{ auth()->user()->isAdmin() ? '1fr' : '1fr 340px' }};gap:20px;margin-bottom:20px;">
 
     {{-- Absensi hari ini --}}
     <div class="card">
@@ -192,11 +193,12 @@
         </div>
     </div>
 
-    {{-- Heatmap bulan ini --}}
+    {{-- Heatmap bulan ini: hanya untuk karyawan (bukan admin) --}}
+    @if(!auth()->user()->isAdmin())
     <div class="card">
         <div class="card-header">
             <span class="card-title">Kehadiran Bulan Ini</span>
-            <a href="{{ route('laporan.index') }}" class="btn btn-secondary btn-sm">Detail</a>
+            <a href="{{ route('absensi.index') }}" class="btn btn-secondary btn-sm">Detail</a>
         </div>
         <div class="card-body" style="padding:16px;">
             {{-- Day headers --}}
@@ -229,38 +231,37 @@
                     $isFuture = $date->isFuture();
                     $isToday = $date->isToday();
 
-                    if ($isWeekend || $isFuture) {
-                        $cls = 'heatmap-0';
-                    } elseif (!$d) {
-                        $cls = 'heatmap-danger';
-                    } else {
+                    // Prioritas: jika ada data absensi → tampilkan status nyata
+                    // Weekend/future tanpa data absensi → abu-abu (libur/belum)
+                    if ($d) {
                         $sangat = (int)($d->sangat_terlambat ?? 0);
-                        $pct    = $totalKaryawan > 0 ? ($d->hadir / $totalKaryawan) : 0;
+                        $hadir  = (int)($d->hadir ?? 0);
 
-                        // If any sangat_terlambat → red override on otherwise good days
-                        if ($sangat > 0 && $pct >= 0.9) {
-                            $cls = 'heatmap-warn'; // mostly hadir but ada yg sangat terlambat
+                        if ($hadir > 0 && $sangat > 0) {
+                            $cls = 'heatmap-warn';   // hadir tapi sangat terlambat
                         } elseif ($sangat > 0) {
-                            $cls = 'heatmap-danger';
-                        } elseif ($pct >= 0.9) {
-                            $cls = 'heatmap-5';
-                        } elseif ($pct >= 0.75) {
-                            $cls = 'heatmap-4';
-                        } elseif ($pct >= 0.6) {
-                            $cls = 'heatmap-3';
-                        } elseif ($pct >= 0.4) {
-                            $cls = 'heatmap-2';
-                        } elseif ($pct > 0) {
-                            $cls = 'heatmap-1';
+                            $cls = 'heatmap-danger'; // sangat terlambat
+                        } elseif ($hadir > 0 && (int)($d->terlambat ?? 0) > 0) {
+                            $cls = 'heatmap-warn';   // hadir tapi terlambat ringan
+                        } elseif ($hadir > 0) {
+                            $cls = 'heatmap-5';      // hadir tepat waktu
                         } else {
-                            $cls = 'heatmap-danger';
+                            $cls = 'heatmap-danger'; // tidak hadir
                         }
+                    } elseif ($isFuture) {
+                        $cls = 'heatmap-0';          // belum terjadi
+                    } elseif ($isWeekend) {
+                        $cls = 'heatmap-0';          // libur tanpa data
+                    } else {
+                        $cls = 'heatmap-danger';     // hari kerja tapi kosong
                     }
 
                     $sangat = (int)($d->sangat_terlambat ?? 0);
                     $title  = $d
-                        ? "{$d->hadir} hadir, {$d->terlambat} terlambat, {$sangat} sangat terlambat, {$d->alpa} alpa"
-                        : ($isWeekend ? 'Libur' : 'Tidak ada data');
+                        ? (($d->hadir > 0 ? 'Hadir' : 'Tidak hadir')
+                            . ($d->terlambat > 0 ? ', Terlambat' : '')
+                            . ($sangat > 0 ? ', Sangat Terlambat' : ''))
+                        : ($isWeekend ? 'Libur' : ($isFuture ? 'Belum terjadi' : 'Tidak ada data'));
                 @endphp
                 <div class="heatmap-day {{ $cls }}"
                      style="{{ $isToday ? 'outline:2px solid #cc0000;outline-offset:-2px;' : '' }}"
@@ -278,13 +279,13 @@
             {{-- Legend --}}
             <div style="display:flex;gap:6px;margin-top:12px;flex-wrap:wrap;font-size:10px;color:#888;">
                 <div style="display:flex;align-items:center;gap:3px;"><div style="width:10px;height:10px;border-radius:2px;background:#f3f4f6;"></div> Libur</div>
-                <div style="display:flex;align-items:center;gap:3px;"><div style="width:10px;height:10px;border-radius:2px;background:#bbf7d0;"></div> &lt;60%</div>
-                <div style="display:flex;align-items:center;gap:3px;"><div style="width:10px;height:10px;border-radius:2px;background:#22c55e;"></div> &gt;90%</div>
+                <div style="display:flex;align-items:center;gap:3px;"><div style="width:10px;height:10px;border-radius:2px;background:#22c55e;"></div> Hadir</div>
                 <div style="display:flex;align-items:center;gap:3px;"><div style="width:10px;height:10px;border-radius:2px;background:#fef9c3;"></div> ⚠ Terlambat</div>
-                <div style="display:flex;align-items:center;gap:3px;"><div style="width:10px;height:10px;border-radius:2px;background:#fee2e2;"></div> 🔴 Sangat Terlambat/Kosong</div>
+                <div style="display:flex;align-items:center;gap:3px;"><div style="width:10px;height:10px;border-radius:2px;background:#fee2e2;"></div> 🔴 Tidak Hadir/Kosong</div>
             </div>
         </div>
     </div>
+    @endif
 
 </div>
 

@@ -4,7 +4,13 @@
 @section('breadcrumb', 'Kehadiran › Detail Absensi')
 
 @section('content')
+@if(auth()->user()->canApprove())
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+@endif
+
 <div style="max-width:900px;margin:0 auto;display:flex;flex-direction:column;gap:20px;">
+
 
     {{-- Main Summary Card --}}
     <div class="card">
@@ -32,12 +38,16 @@
                         <div style="background:#fafafa;padding:12px;border-radius:6px;border:1px solid #e5e5e5;text-align:center;">
                             <div style="font-size:11px;color:#888;">JAM MASUK</div>
                             <div style="font-size:20px;font-weight:700;color:#16a34a;margin-top:2px;">{{ $absensi->jam_masuk ? substr($absensi->jam_masuk,0,5) : '-' }}</div>
+                            @if(auth()->user()->canApprove())
                             <div style="font-size:11px;color:#666;margin-top:4px;">{{ $absensi->lokasi_masuk }}</div>
+                            @endif
                         </div>
                         <div style="background:#fafafa;padding:12px;border-radius:6px;border:1px solid #e5e5e5;text-align:center;">
                             <div style="font-size:11px;color:#888;">JAM PULANG</div>
                             <div style="font-size:20px;font-weight:700;color:#16a34a;margin-top:2px;">{{ $absensi->jam_pulang ? substr($absensi->jam_pulang,0,5) : '-' }}</div>
+                            @if(auth()->user()->canApprove())
                             <div style="font-size:11px;color:#666;margin-top:4px;">{{ $absensi->lokasi_pulang }}</div>
+                            @endif
                         </div>
                     </div>
                 </div>
@@ -102,5 +112,87 @@
         </div>
     </div>
 
+    {{-- Maps Location Verification for Admin --}}
+    @if(auth()->user()->canApprove() && ($absensi->latitude_masuk || $absensi->latitude_pulang))
+    <div class="card">
+        <div class="card-header">
+            <span class="card-title">Verifikasi Lokasi GPS (Peta)</span>
+        </div>
+        <div class="card-body">
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;">
+                {{-- Map Masuk --}}
+                <div>
+                    <h5 style="font-size:12px;font-weight:700;color:#555;margin-bottom:8px;">Peta Lokasi Masuk</h5>
+                    @if($absensi->latitude_masuk && $absensi->longitude_masuk)
+                    <div id="map-detail-masuk" style="height:250px;border-radius:6px;border:1px solid #ddd;z-index:1;"></div>
+                    <div style="font-size:11px;color:#666;margin-top:6px;">
+                        <strong>Lokasi:</strong> {{ $absensi->lokasi_masuk }}<br>
+                        <strong>Koordinat:</strong> {{ $absensi->latitude_masuk }}, {{ $absensi->longitude_masuk }}
+                    </div>
+                    @else
+                    <div style="height:250px;border-radius:6px;border:1px dashed #ddd;background:#f9fafb;display:flex;align-items:center;justify-content:center;color:#aaa;font-size:12px;">
+                        Tidak ada data lokasi masuk
+                    </div>
+                    @endif
+                </div>
+
+                {{-- Map Pulang --}}
+                <div>
+                    <h5 style="font-size:12px;font-weight:700;color:#555;margin-bottom:8px;">Peta Lokasi Pulang</h5>
+                    @if($absensi->latitude_pulang && $absensi->longitude_pulang)
+                    <div id="map-detail-pulang" style="height:250px;border-radius:6px;border:1px solid #ddd;z-index:1;"></div>
+                    <div style="font-size:11px;color:#666;margin-top:6px;">
+                        <strong>Lokasi:</strong> {{ $absensi->lokasi_pulang }}<br>
+                        <strong>Koordinat:</strong> {{ $absensi->latitude_pulang }}, {{ $absensi->longitude_pulang }}
+                    </div>
+                    @else
+                    <div style="height:250px;border-radius:6px;border:1px dashed #ddd;background:#f9fafb;display:flex;align-items:center;justify-content:center;color:#aaa;font-size:12px;">
+                        Tidak ada data lokasi pulang
+                    </div>
+                    @endif
+                </div>
+            </div>
+        </div>
+    </div>
+    @endif
+
 </div>
+
+@if(auth()->user()->canApprove())
+@push('scripts')
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    @if($absensi->latitude_masuk && $absensi->longitude_masuk)
+        try {
+            const latMasuk = {{ $absensi->latitude_masuk }};
+            const lngMasuk = {{ $absensi->longitude_masuk }};
+            const mapMasuk = L.map('map-detail-masuk').setView([latMasuk, lngMasuk], 15);
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '&copy; OpenStreetMap'
+            }).addTo(mapMasuk);
+            L.marker([latMasuk, lngMasuk]).addTo(mapMasuk)
+                .bindPopup("Lokasi Absen Masuk: {{ $absensi->user->name }}").openPopup();
+        } catch (e) {
+            console.error('Error loading check-in map:', e);
+        }
+    @endif
+
+    @if($absensi->latitude_pulang && $absensi->longitude_pulang)
+        try {
+            const latPulang = {{ $absensi->latitude_pulang }};
+            const lngPulang = {{ $absensi->longitude_pulang }};
+            const mapPulang = L.map('map-detail-pulang').setView([latPulang, lngPulang], 15);
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '&copy; OpenStreetMap'
+            }).addTo(mapPulang);
+            L.marker([latPulang, lngPulang]).addTo(mapPulang)
+                .bindPopup("Lokasi Absen Pulang: {{ $absensi->user->name }}").openPopup();
+        } catch (e) {
+            console.error('Error loading check-out map:', e);
+        }
+    @endif
+});
+</script>
+@endpush
+@endif
 @endsection

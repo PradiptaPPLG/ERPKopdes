@@ -49,7 +49,9 @@
                     <th>Shift</th>
                     <th>Jam Masuk</th>
                     <th>Jam Pulang</th>
+                    @if(auth()->user()->canApprove())
                     <th>Lokasi Masuk</th>
+                    @endif
                     <th>Status</th>
                     <th>Keterlambatan</th>
                     <th style="text-align:center;">Aksi</th>
@@ -72,9 +74,11 @@
                     </td>
                     <td style="font-weight:600;">{{ $abs->jam_masuk ? substr($abs->jam_masuk,0,5) : '-' }}</td>
                     <td style="color:#666;">{{ $abs->jam_pulang ? substr($abs->jam_pulang,0,5) : '-' }}</td>
+                    @if(auth()->user()->canApprove())
                     <td style="font-size:11px;color:#666;max-width:150px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
                         {{ $abs->lokasi_masuk ?? '-' }}
                     </td>
+                    @endif
                     <td><span class="badge badge-{{ $abs->statusColor() }}">{{ $abs->statusLabel() }}</span></td>
                     <td style="font-size:12px;">{{ $abs->keterlambatan_menit > 0 ? $abs->keterlambatan_menit . ' mnt' : '-' }}</td>
                     <td style="text-align:center;">
@@ -82,7 +86,7 @@
                     </td>
                 </tr>
                 @empty
-                <tr><td colspan="9" style="text-align:center;padding:28px;color:#888;">Tidak ada data absensi.</td></tr>
+                <tr><td colspan="{{ auth()->user()->canApprove() ? 9 : 8 }}" style="text-align:center;padding:28px;color:#888;">Tidak ada data absensi.</td></tr>
                 @endforelse
             </tbody>
         </table>

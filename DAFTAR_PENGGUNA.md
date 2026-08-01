@@ -36,7 +36,3 @@ Berikut adalah daftar lengkap akun pengguna yang dapat digunakan untuk masuk (lo
    - Melihat Rekap Absensi diri sendiri.
    - Mengajukan Izin atau Cuti (beserta upload lampiran).
    - Melihat status shift kerja harian di Dashboard.
-
----
-
-> Dokumen ini tersimpan di: [DAFTAR_PENGGUNA.md](file:///c:/xampp/htdocs/ERPKopdes/DAFTAR_PENGGUNA.md)

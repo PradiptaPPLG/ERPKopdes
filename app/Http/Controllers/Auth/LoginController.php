@@ -21,13 +21,31 @@ class LoginController extends Controller
     public function login(Request $request)
     {
         $request->validate([
-            'email'    => ['required', 'email'],
-            'password' => ['required'],
+            'email'                => ['required', 'email'],
+            'password'             => ['required'],
+            'g-recaptcha-response' => ['required'],
         ], [
-            'email.required'    => 'Email harus diisi.',
-            'email.email'       => 'Format email tidak valid.',
-            'password.required' => 'Password harus diisi.',
+            'email.required'                => 'Email harus diisi.',
+            'email.email'                   => 'Format email tidak valid.',
+            'password.required'             => 'Password harus diisi.',
+            'g-recaptcha-response.required' => 'Verifikasi captcha wajib diisi.',
         ]);
+
+        // Verifikasi token reCAPTCHA ke API Google
+        $secretKey = config('services.recaptcha.secret_key');
+        $response  = $request->input('g-recaptcha-response');
+
+        $verification = \Illuminate\Support\Facades\Http::asForm()->post('https://www.google.com/recaptcha/api/siteverify', [
+            'secret'   => $secretKey,
+            'response' => $response,
+            'remoteip' => $request->ip(),
+        ]);
+
+        if (!$verification->json('success')) {
+            throw ValidationException::withMessages([
+                'email' => 'Verifikasi captcha gagal. Silakan coba lagi.',
+            ]);
+        }
 
         $credentials = $request->only('email', 'password');
         $remember    = $request->boolean('remember');

@@ -8,6 +8,7 @@
     <style>
         body { background: #f5f5f5; display:flex; min-height:100vh; align-items:center; justify-content:center; }
     </style>
+    <script src="https://www.google.com/recaptcha/api.js" async defer></script>
 </head>
 <body>
     @yield('content')

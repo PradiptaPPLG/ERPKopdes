@@ -4,8 +4,11 @@
 @section('breadcrumb', 'Kehadiran › Absen Hari Ini')
 
 @section('content')
+{{-- Hanya load Leaflet untuk admin. Karyawan tidak perlu Leaflet sama sekali. --}}
+@if(auth()->user()->canApprove())
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+@endif
 <script src="https://cdn.jsdelivr.net/npm/signature_pad@4.1.7/dist/signature_pad.umd.min.js"></script>
 
 <div style="max-width:900px;margin:0 auto;">
@@ -48,7 +51,6 @@
                     <div style="font-size:28px;font-weight:700;color:#16a34a;margin:6px 0;">
                         {{ substr($absensi->jam_masuk,0,5) }} WIB
                     </div>
-                    <div style="font-size:12px;color:#555;">{{ $absensi->lokasi_masuk }}</div>
                     <span class="badge badge-{{ $absensi->statusColor() }}" style="margin-top:10px;">
                         {{ $absensi->statusLabel() }}
                     </span>
@@ -56,15 +58,19 @@
                 @else
                 <form method="POST" action="{{ route('absensi.masuk') }}" id="formMasuk">
                     @csrf
-                    <input type="hidden" name="latitude" id="lat_masuk">
+                    <input type="hidden" name="latitude"  id="lat_masuk">
                     <input type="hidden" name="longitude" id="lng_masuk">
-                    <input type="hidden" name="lokasi" id="lokasi_masuk">
+                    <input type="hidden" name="lokasi"    id="lokasi_masuk">
                     <input type="hidden" name="ttd_masuk" id="ttd_masuk_data">
 
+                    {{-- Status GPS (tanpa peta, tanpa koordinat) --}}
                     <div class="form-group">
-                        <label class="form-label">Lokasi Anda <span class="required">*</span></label>
-                        <div id="map-masuk"></div>
-                        <div id="loc_info_masuk" style="font-size:11px;color:#666;margin-top:6px;">Mendapatkan lokasi GPS...</div>
+                        <div id="gps_status_masuk" style="display:flex;align-items:center;gap:8px;padding:10px 14px;border-radius:8px;background:#f9fafb;border:1px solid #e5e5e5;font-size:13px;color:#888;">
+                            <svg id="gps_spinner_masuk" xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" style="animation:spin 1.2s linear infinite;flex-shrink:0;">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M4 12a8 8 0 018-8v4l3-3-3-3v4a10 10 0 100 10h-2a8 8 0 01-8-8z"/>
+                            </svg>
+                            <span id="gps_text_masuk">Mendeteksi lokasi GPS, mohon tunggu…</span>
+                        </div>
                     </div>
 
                     <div class="form-group">
@@ -77,7 +83,9 @@
                         </div>
                     </div>
 
-                    <button type="submit" class="btn btn-primary" style="width:100%;justify-content:center;margin-top:10px;" onclick="prepareSubmit('masuk', event)">
+                    <button type="submit" id="btn_masuk" class="btn btn-primary" disabled
+                        style="width:100%;justify-content:center;margin-top:10px;opacity:0.6;"
+                        onclick="prepareSubmit('masuk', event)">
                         Absen Masuk
                     </button>
                 </form>
@@ -100,7 +108,6 @@
                     <div style="font-size:28px;font-weight:700;color:#16a34a;margin:6px 0;">
                         {{ substr($absensi->jam_pulang,0,5) }} WIB
                     </div>
-                    <div style="font-size:12px;color:#555;">{{ $absensi->lokasi_pulang }}</div>
                     <div style="font-size:12px;color:#888;margin-top:10px;">
                         Durasi Kerja: <strong>{{ $absensi->durasiKerja() }}</strong>
                     </div>
@@ -112,15 +119,19 @@
                 @else
                 <form method="POST" action="{{ route('absensi.pulang') }}" id="formPulang">
                     @csrf
-                    <input type="hidden" name="latitude" id="lat_pulang">
-                    <input type="hidden" name="longitude" id="lng_pulang">
-                    <input type="hidden" name="lokasi" id="lokasi_pulang">
+                    <input type="hidden" name="latitude"   id="lat_pulang">
+                    <input type="hidden" name="longitude"  id="lng_pulang">
+                    <input type="hidden" name="lokasi"     id="lokasi_pulang">
                     <input type="hidden" name="ttd_pulang" id="ttd_pulang_data">
 
+                    {{-- Status GPS (tanpa peta, tanpa koordinat) --}}
                     <div class="form-group">
-                        <label class="form-label">Lokasi Anda <span class="required">*</span></label>
-                        <div id="map-pulang"></div>
-                        <div id="loc_info_pulang" style="font-size:11px;color:#666;margin-top:6px;">Mendapatkan lokasi GPS...</div>
+                        <div id="gps_status_pulang" style="display:flex;align-items:center;gap:8px;padding:10px 14px;border-radius:8px;background:#f9fafb;border:1px solid #e5e5e5;font-size:13px;color:#888;">
+                            <svg id="gps_spinner_pulang" xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" style="animation:spin 1.2s linear infinite;flex-shrink:0;">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M4 12a8 8 0 018-8v4l3-3-3-3v4a10 10 0 100 10h-2a8 8 0 01-8-8z"/>
+                            </svg>
+                            <span id="gps_text_pulang">Mendeteksi lokasi GPS, mohon tunggu…</span>
+                        </div>
                     </div>
 
                     <div class="form-group">
@@ -133,7 +144,9 @@
                         </div>
                     </div>
 
-                    <button type="submit" class="btn btn-success" style="width:100%;justify-content:center;margin-top:10px;" onclick="prepareSubmit('pulang', event)">
+                    <button type="submit" id="btn_pulang" class="btn btn-success" disabled
+                        style="width:100%;justify-content:center;margin-top:10px;opacity:0.6;"
+                        onclick="prepareSubmit('pulang', event)">
                         Absen Pulang
                     </button>
                 </form>
@@ -144,6 +157,10 @@
     </div>
 
 </div>
+
+<style>
+@keyframes spin { 0%{transform:rotate(0deg)} 100%{transform:rotate(360deg)} }
+</style>
 
 <script>
 // Live clock
@@ -167,43 +184,87 @@ document.addEventListener('DOMContentLoaded', () => {
         padPulang = new SignaturePad(canvasPulang);
     }
 
-    // Geolocation
+    // Ambil GPS di background — TANPA tampilkan ke user
     if (navigator.geolocation) {
-        navigator.geolocation.getCurrentPosition(pos => {
-            const lat = pos.coords.latitude;
-            const lng = pos.coords.longitude;
-
-            initMap('masuk', lat, lng);
-            initMap('pulang', lat, lng);
-        }, err => {
-            // Fallback location: Jakarta Kopdes office
-            const fallbackLat = -6.200000, fallbackLng = 106.816666;
-            initMap('masuk', fallbackLat, fallbackLng);
-            initMap('pulang', fallbackLat, fallbackLng);
-        });
+        navigator.geolocation.getCurrentPosition(
+            pos => setGps(pos.coords.latitude, pos.coords.longitude),
+            err => setGpsFallback(),
+            { timeout: 10000, maximumAge: 0 }
+        );
+    } else {
+        setGpsFallback();
     }
 });
 
-function initMap(type, lat, lng) {
-    const container = document.getElementById(`map-${type}`);
-    if (!container) return;
+function setGps(lat, lng) {
+    // Isi hidden fields (lat/lng dicatat server, TIDAK ditampilkan ke karyawan)
+    ['masuk', 'pulang'].forEach(type => {
+        const latEl  = document.getElementById(`lat_${type}`);
+        const lngEl  = document.getElementById(`lng_${type}`);
+        const locEl  = document.getElementById(`lokasi_${type}`);
+        const btn    = document.getElementById(`btn_${type}`);
+        const status = document.getElementById(`gps_status_${type}`);
+        const text   = document.getElementById(`gps_text_${type}`);
+        if (!latEl) return;
 
-    document.getElementById(`lat_${type}`).value = lat;
-    document.getElementById(`lng_${type}`).value = lng;
-    document.getElementById(`lokasi_${type}`).value = "Kantor Koperasi Desa Maju Bersama";
-    document.getElementById(`loc_info_${type}`).innerText = `Lat: ${lat.toFixed(5)}, Lng: ${lng.toFixed(5)}`;
+        latEl.value = lat;
+        lngEl.value = lng;
+        locEl.value = 'GPS Terverifikasi';
 
-    const map = L.map(`map-${type}`).setView([lat, lng], 15);
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '&copy; OpenStreetMap'
-    }).addTo(map);
+        // Tampilkan status berhasil — tanpa koordinat
+        if (status) {
+            status.style.background = '#f0fdf4';
+            status.style.borderColor = '#86efac';
+            status.style.color = '#15803d';
+        }
+        if (text) text.innerHTML = '<strong>✓ Lokasi berhasil terdeteksi</strong>';
+        const spinner = document.getElementById(`gps_spinner_${type}`);
+        if (spinner) {
+            spinner.style.animation = 'none';
+            spinner.style.stroke = '#16a34a';
+        }
+        // Aktifkan tombol absen
+        if (btn) {
+            btn.disabled = false;
+            btn.style.opacity = '1';
+        }
+    });
+}
 
-    L.marker([lat, lng]).addTo(map)
-        .bindPopup("Lokasi Absensi Anda").openPopup();
+function setGpsFallback() {
+    ['masuk', 'pulang'].forEach(type => {
+        const latEl  = document.getElementById(`lat_${type}`);
+        const btn    = document.getElementById(`btn_${type}`);
+        const status = document.getElementById(`gps_status_${type}`);
+        const text   = document.getElementById(`gps_text_${type}`);
+        if (!latEl) return;
+
+        // Pakai koordinat fallback kantor (disimpan server, tidak ditampilkan)
+        document.getElementById(`lat_${type}`).value = '-6.200000';
+        document.getElementById(`lng_${type}`).value = '106.816666';
+        document.getElementById(`lokasi_${type}`).value = 'Lokasi Manual';
+
+        if (status) {
+            status.style.background = '#fffbeb';
+            status.style.borderColor = '#fcd34d';
+            status.style.color = '#92400e';
+        }
+        if (text) text.innerHTML = '⚠ GPS tidak tersedia, menggunakan lokasi default';
+        const spinner = document.getElementById(`gps_spinner_${type}`);
+        if (spinner) {
+            spinner.style.animation = 'none';
+            spinner.style.stroke = '#d97706';
+        }
+        // Tetap aktifkan tombol agar karyawan bisa absen
+        if (btn) {
+            btn.disabled = false;
+            btn.style.opacity = '1';
+        }
+    });
 }
 
 function clearPad(type) {
-    if (type === 'masuk' && padMasuk) padMasuk.clear();
+    if (type === 'masuk'  && padMasuk)  padMasuk.clear();
     if (type === 'pulang' && padPulang) padPulang.clear();
 }
 
