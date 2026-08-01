@@ -90,7 +90,7 @@ class AbsensiController extends Controller
             ]
         );
 
-        // Determine lateness — 3-tier: hadir / terlambat / sangat_terlambat
+        // Determine lateness : 3-tier: hadir / terlambat / sangat_terlambat
         $shift    = $jadwal->shift ?? Shift::find($user->shift_default_id) ?? Shift::first();
         $jamMulai = Carbon::parse($today->format('Y-m-d') . ' ' . $shift->jam_mulai);
         $now      = Carbon::now();
