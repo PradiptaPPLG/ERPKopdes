@@ -263,7 +263,7 @@
                 @endphp
                 <div class="heatmap-day {{ $cls }}"
                      style="{{ $isToday ? 'outline:2px solid #cc0000;outline-offset:-2px;' : '' }}"
-                     title="{{ $day }} — {{ $title }}">
+                     title="{{ $day }} - {{ $title }}">
                     {{ $day }}
                 </div>
                 @endfor
