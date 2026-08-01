@@ -12,7 +12,7 @@
             Selamat Datang, {{ auth()->user()->name }}!
         </h2>
         <p style="font-size:13px;color:#888;margin-top:2px;">
-            {{ $today->translatedFormat('l, d F Y') }} &mdash; {{ auth()->user()->jabatanLabel() }}
+            {{ $today->translatedFormat('l, d F Y') }} - {{ auth()->user()->jabatanLabel() }}
         </p>
     </div>
 
@@ -179,10 +179,10 @@
                             <span style="display:inline-block;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:700;background:{{ $abs->jadwal->shift->kode_warna }}22;color:{{ $abs->jadwal->shift->kode_warna }};">
                                 {{ $abs->jadwal->shift->nama_shift }}
                             </span>
-                            @else —@endif
+                            @else -@endif
                         </td>
-                        <td style="font-weight:600;">{{ $abs->jam_masuk ? substr($abs->jam_masuk,0,5) : '—' }}</td>
-                        <td style="color:#666;">{{ $abs->jam_pulang ? substr($abs->jam_pulang,0,5) : '—' }}</td>
+                        <td style="font-weight:600;">{{ $abs->jam_masuk ? substr($abs->jam_masuk,0,5) : '-' }}</td>
+                        <td style="color:#666;">{{ $abs->jam_pulang ? substr($abs->jam_pulang,0,5) : '-' }}</td>
                         <td><span class="badge badge-{{ $abs->statusColor() }}">{{ $abs->statusLabel() }}</span></td>
                     </tr>
                     @empty

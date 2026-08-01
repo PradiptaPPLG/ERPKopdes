@@ -83,7 +83,7 @@
                             </div>
                         </div>
                     </td>
-                    <td style="font-size:12px;color:#555;">{{ $k->nip ?? '—' }}</td>
+                    <td style="font-size:12px;color:#555;">{{ $k->nip ?? '-' }}</td>
                     <td>
                         <span class="badge badge-primary">{{ $k->jabatanLabel() }}</span>
                     </td>
@@ -93,10 +93,10 @@
                             {{ $k->shiftDefault->nama_shift }}
                         </span>
                         @else
-                        <span style="color:#888;">—</span>
+                        <span style="color:#888;">-</span>
                         @endif
                     </td>
-                    <td style="font-size:12px;color:#555;">{{ $k->no_hp ?? '—' }}</td>
+                    <td style="font-size:12px;color:#555;">{{ $k->no_hp ?? '-' }}</td>
                     <td>
                         <span class="badge {{ $k->status=='aktif' ? 'badge-success' : ($k->status=='cuti' ? 'badge-warning' : 'badge-danger') }}">
                             {{ ucfirst($k->status) }}
