@@ -36,7 +36,7 @@ Route::middleware('auth')->group(function () {
             Route::post('/pulang', [AbsensiController::class, 'absenPulang'])->name('pulang');
         });
 
-        // Wildcard routes — harus di bawah route statis
+        // Wildcard routes : harus di bawah route statis
         Route::get('/{absensi}', [AbsensiController::class, 'show'])->name('show');
         Route::post('/{absensi}/verifikasi', [AbsensiController::class, 'verifikasiTtd'])
             ->name('verifikasi')
