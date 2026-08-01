@@ -184,7 +184,7 @@ document.addEventListener('DOMContentLoaded', () => {
         padPulang = new SignaturePad(canvasPulang);
     }
 
-    // Ambil GPS di background — TANPA tampilkan ke user
+    // Ambil GPS di background : TANPA tampilkan ke user
     if (navigator.geolocation) {
         navigator.geolocation.getCurrentPosition(
             pos => setGps(pos.coords.latitude, pos.coords.longitude),
