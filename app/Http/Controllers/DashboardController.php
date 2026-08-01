@@ -76,4 +76,9 @@ class DashboardController extends Controller
             'izinTerbaru', 'myAbsensi', 'myJadwal', 'today', 'month', 'year'
         ));
     }
+
+    public function panduan()
+    {
+        return view('panduan.index');
+    }
 }

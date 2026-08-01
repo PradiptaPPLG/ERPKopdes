@@ -22,6 +22,7 @@ Route::middleware('auth')->group(function () {
 
     // Dashboard
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+    Route::get('/panduan',   [DashboardController::class, 'panduan'])->name('panduan');
 
     // ── Absensi ────────────────────────────────────────────────
     Route::prefix('absensi')->name('absensi.')->group(function () {
