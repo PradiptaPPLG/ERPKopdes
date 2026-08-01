@@ -9,7 +9,7 @@
 <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;">
     <div>
         <h2 style="font-size:18px;font-weight:700;color:#1a1a1a;">
-            Selamat Datang, {{ auth()->user()->name }} 👋
+            Selamat Datang, {{ auth()->user()->name }}!
         </h2>
         <p style="font-size:13px;color:#888;margin-top:2px;">
             {{ $today->translatedFormat('l, d F Y') }} &mdash; {{ auth()->user()->jabatanLabel() }}
