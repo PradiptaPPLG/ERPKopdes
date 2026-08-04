@@ -116,7 +116,7 @@
     </nav>
 
     <div class="sidebar-footer">
-        <div style="display:flex;align-items:center;gap:10px;">
+        <a href="{{ route('profile.show') }}" style="display:flex;align-items:center;gap:10px;text-decoration:none;color:inherit;margin-bottom:10px;">
             <div class="avatar" style="background:#fff3f3;color:#cc0000;font-size:11px;width:32px;height:32px;">
                 {{ strtoupper(substr(auth()->user()->name, 0, 1)) }}
             </div>
@@ -128,8 +128,8 @@
                     {{ auth()->user()->jabatanLabel() }}
                 </div>
             </div>
-        </div>
-        <form method="POST" action="{{ route('logout') }}" style="margin-top:10px;">
+        </a>
+        <form method="POST" action="{{ route('logout') }}">
             @csrf
             <button type="submit" class="btn btn-sm" style="width:100%;background:rgba(255,255,255,0.12);color:#fff;border:1px solid rgba(255,255,255,0.2);justify-content:center;">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
@@ -150,18 +150,65 @@
             <div class="topbar-breadcrumb">@yield('breadcrumb')</div>
             @endif
         </div>
-        <div style="display:flex;align-items:center;gap:10px;">
-            <div style="text-align:right;">
-                <div style="font-size:13px;font-weight:600;color:#1a1a1a;">{{ auth()->user()->name }}</div>
-                <div style="font-size:11px;color:#888;">{{ auth()->user()->jabatanLabel() }}</div>
+        <div style="display:flex;align-items:center;gap:16px;">
+            {{-- Notification Dropdown --}}
+            <div class="dropdown">
+                <button type="button" class="dropdown-toggle" style="background:none;border:none;padding:8px;position:relative;cursor:pointer;color:#555;display:flex;align-items:center;justify-content:center;">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+                    </svg>
+                    @if(auth()->user()->unreadNotifications()->count() > 0)
+                        <span style="position:absolute;top:4px;right:4px;width:10px;height:10px;background:#dc2626;border-radius:50%;border:2px solid #fff;"></span>
+                    @endif
+                </button>
+                <div class="dropdown-menu" style="min-width:320px;max-height:400px;overflow-y:auto;right:0;padding:0;border-radius:8px;border:1px solid #eef2f6;box-shadow:0 10px 25px rgba(0,0,0,0.1);">
+                    <div style="padding:12px 16px;border-bottom:1px solid #f0f3f6;display:flex;align-items:center;justify-content:between;background:#fafbfc;">
+                        <span style="font-weight:700;color:#1a1a1a;font-size:12px;">Notifikasi</span>
+                        @if(auth()->user()->unreadNotifications()->count() > 0)
+                            <form action="{{ route('notifications.read-all') }}" method="POST" style="margin:0;">
+                                @csrf
+                                <button type="submit" style="background:none;border:none;color:#cc0000;font-size:11px;font-weight:600;cursor:pointer;padding:0;">Tandai Semua Dibaca</button>
+                            </form>
+                        @endif
+                    </div>
+                    <div style="padding:6px 0;">
+                        @forelse(auth()->user()->notifications()->take(5)->get() as $notif)
+                            <a href="{{ route('notifications.read', $notif) }}" class="dropdown-item" style="padding:10px 16px;border-bottom:1px solid #fafafa;white-space:normal;display:block;background: {{ $notif->is_read ? '#fff' : '#fff9f9' }};">
+                                <div style="display:flex;justify-content:between;margin-bottom:2px;">
+                                    <span style="font-weight:700;color:#1a1a1a;font-size:12px;">{{ $notif->title }}</span>
+                                    @if(!$notif->is_read)
+                                        <span style="display:inline-block;width:6px;height:6px;background:#dc2626;border-radius:50%;margin-left:auto;align-self:center;"></span>
+                                    @endif
+                                </div>
+                                <div style="color:#555;font-size:11px;line-height:1.4;margin-top:2px;">{{ $notif->message }}</div>
+                                <div style="color:#999;font-size:10px;margin-top:4px;">{{ $notif->created_at->diffForHumans() }}</div>
+                            </a>
+                        @empty
+                            <div style="padding:24px 16px;text-align:center;color:#888;font-size:12px;">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" style="margin:0 auto 8px;color:#ccc;" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0a2 2 0 01-2 2H6a2 2 0 01-2-2m16 0V9a2 2 0 00-2-2H6a2 2 0 00-2-2" />
+                                </svg>
+                                Tidak ada notifikasi baru
+                            </div>
+                        @endforelse
+                    </div>
+                </div>
             </div>
-            @if(auth()->user()->foto_profil)
-            <img src="{{ Storage::url(auth()->user()->foto_profil) }}" alt="" class="avatar">
-            @else
-            <div class="avatar" style="background:#fff0f0;color:#cc0000;">
-                {{ strtoupper(substr(auth()->user()->name, 0, 1)) }}
-            </div>
-            @endif
+
+            {{-- Profile Link --}}
+            <a href="{{ route('profile.show') }}" style="display:flex;align-items:center;gap:10px;text-decoration:none;color:inherit;">
+                <div style="text-align:right;">
+                    <div style="font-size:13px;font-weight:600;color:#1a1a1a;">{{ auth()->user()->name }}</div>
+                    <div style="font-size:11px;color:#888;">{{ auth()->user()->jabatanLabel() }}</div>
+                </div>
+                @if(auth()->user()->foto_profil)
+                <img src="{{ Storage::url(auth()->user()->foto_profil) }}" alt="" class="avatar" style="border: 2px solid #fff; box-shadow: 0 2px 8px rgba(0,0,0,0.08);">
+                @else
+                <div class="avatar" style="background:#fff0f0;color:#cc0000;border: 2px solid #fff; box-shadow: 0 2px 8px rgba(0,0,0,0.08);">
+                    {{ strtoupper(substr(auth()->user()->name, 0, 1)) }}
+                </div>
+                @endif
+            </a>
         </div>
     </header>
 
