@@ -66,6 +66,17 @@ class IzinCutiController extends Controller
 
         LogAktivitas::catat('ajukan_izin', "Mengajukan {$izin->jenisLabel()} mulai {$izin->tanggal_mulai->format('d M Y')}");
 
+        // Kirim notifikasi ke semua admin/approver
+        $admins = User::whereIn('jabatan', ['admin', 'ketua', 'sekretaris'])->get();
+        foreach ($admins as $admin) {
+            \App\Models\Notification::create([
+                'user_id' => $admin->id,
+                'title'   => 'Pengajuan Izin & Cuti Baru',
+                'message' => auth()->user()->name . ' mengajukan ' . $izin->jenisLabel() . ' mulai ' . $izin->tanggal_mulai->format('d/m/Y'),
+                'link'    => route('izin.show', $izin),
+            ]);
+        }
+
         return redirect()->route('izin.index')
             ->with('success', 'Permohonan izin berhasil diajukan dan menunggu persetujuan.');
     }
@@ -94,6 +105,14 @@ class IzinCutiController extends Controller
 
         $aksi = $request->status === 'disetujui' ? 'approve_izin' : 'tolak_izin';
         LogAktivitas::catat($aksi, "Memproses izin {$izin->user->name}: {$izin->statusLabel()}");
+
+        // Kirim notifikasi ke karyawan pengaju
+        \App\Models\Notification::create([
+            'user_id' => $izin->user_id,
+            'title'   => 'Status Pengajuan Izin & Cuti',
+            'message' => 'Pengajuan ' . $izin->jenisLabel() . ' Anda telah ' . $izin->statusLabel() . ' oleh ' . auth()->user()->name . '.',
+            'link'    => route('izin.show', $izin),
+        ]);
 
         return back()->with('success', "Permohonan izin berhasil {$izin->statusLabel()}.");
     }

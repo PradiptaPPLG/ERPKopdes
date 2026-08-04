@@ -79,4 +79,8 @@ Route::middleware('auth')->group(function () {
         // Laporan
         Route::get('/laporan', [LaporanController::class, 'index'])->name('laporan.index');
     });
+
+    // ── Notifications ──────────────────────────────────────────
+    Route::get('/notifications/{notification}/read', [NotificationController::class, 'read'])->name('notifications.read');
+    Route::post('/notifications/read-all', [NotificationController::class, 'readAll'])->name('notifications.read-all');
 });
