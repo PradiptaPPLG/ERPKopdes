@@ -189,6 +189,30 @@
     </main>
 </div>
 
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    document.addEventListener('click', function(e) {
+        const toggle = e.target.closest('.dropdown-toggle');
+        if (toggle) {
+            const dropdown = toggle.closest('.dropdown');
+            if (dropdown) {
+                document.querySelectorAll('.dropdown.active').forEach(d => {
+                    if (d !== dropdown) d.classList.remove('active');
+                });
+                dropdown.classList.toggle('active');
+                e.preventDefault();
+                e.stopPropagation();
+                return;
+            }
+        }
+        
+        document.querySelectorAll('.dropdown.active').forEach(d => {
+            d.classList.remove('active');
+        });
+    });
+});
+</script>
+
 @stack('scripts')
 </body>
 </html>

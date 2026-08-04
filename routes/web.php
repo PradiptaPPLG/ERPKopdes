@@ -60,6 +60,8 @@ Route::middleware('auth')->group(function () {
     Route::middleware('role:admin,ketua,sekretaris')->group(function () {
 
         // Karyawan
+        Route::post('/karyawan/import-csv',    [KaryawanController::class, 'importCsv'])->name('karyawan.import-csv');
+        Route::get('/karyawan/template-csv',   [KaryawanController::class, 'templateCsv'])->name('karyawan.template-csv');
         Route::resource('karyawan', KaryawanController::class);
 
         // Shift
