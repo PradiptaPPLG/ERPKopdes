@@ -153,12 +153,15 @@
         <div style="display:flex;align-items:center;gap:16px;">
             {{-- Notification Dropdown --}}
             <div class="dropdown">
-                <button type="button" class="dropdown-toggle" style="background:none;border:none;padding:8px;position:relative;cursor:pointer;color:#555;display:flex;align-items:center;justify-content:center;">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <button type="button" class="dropdown-toggle" style="background:#f3f4f6;border:1px solid #d1d5db;border-radius:20px;padding:6px 14px;font-size:12px;font-weight:600;color:#374151;cursor:pointer;display:flex;align-items:center;gap:6px;transition:all 0.15s;line-height:1;">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" style="color:#4b5563;">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
                     </svg>
+                    <span>Notifikasi</span>
                     @if(auth()->user()->unreadNotifications()->count() > 0)
-                        <span style="position:absolute;top:4px;right:4px;width:10px;height:10px;background:#dc2626;border-radius:50%;border:2px solid #fff;"></span>
+                        <span style="background:#dc2626;color:#fff;font-size:10px;font-weight:700;padding:1px 6px;border-radius:10px;line-height:1;">
+                            {{ auth()->user()->unreadNotifications()->count() }}
+                        </span>
                     @endif
                 </button>
                 <div class="dropdown-menu" style="min-width:320px;max-height:400px;overflow-y:auto;right:0;padding:0;border-radius:8px;border:1px solid #eef2f6;box-shadow:0 10px 25px rgba(0,0,0,0.1);">
@@ -185,8 +188,8 @@
                             </a>
                         @empty
                             <div style="padding:24px 16px;text-align:center;color:#888;font-size:12px;">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" style="margin:0 auto 8px;color:#ccc;" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
-                                    <path stroke-linecap="round" stroke-linejoin="round" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0a2 2 0 01-2 2H6a2 2 0 01-2-2m16 0V9a2 2 0 00-2-2H6a2 2 0 00-2-2" />
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" style="margin:0 auto 6px;color:#cbd5e1;" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
                                 </svg>
                                 Tidak ada notifikasi baru
                             </div>

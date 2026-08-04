@@ -6,7 +6,17 @@
     <title>@yield('title', 'Login') - ERP Kopdes</title>
     <link rel="stylesheet" href="{{ asset('css/app.css') }}">
     <style>
-        body { background: #f5f5f5; display:flex; min-height:100vh; align-items:center; justify-content:center; }
+        body {
+            background: linear-gradient(rgba(0, 0, 0, 0.65), rgba(0, 0, 0, 0.65)), url('{{ asset('images/kopdesbglogin.png') }}');
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            display: flex;
+            min-height: 100vh;
+            align-items: center;
+            justify-content: center;
+            margin: 0;
+        }
     </style>
     <script src="https://www.google.com/recaptcha/api.js" async defer></script>
 </head>
