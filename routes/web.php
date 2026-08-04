@@ -7,6 +7,7 @@ use App\Http\Controllers\IzinCutiController;
 use App\Http\Controllers\JadwalShiftController;
 use App\Http\Controllers\KaryawanController;
 use App\Http\Controllers\LaporanController;
+use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\ShiftController;
 use Illuminate\Support\Facades\Route;
 

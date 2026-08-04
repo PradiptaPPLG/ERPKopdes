@@ -55,6 +55,16 @@ class User extends Authenticatable
         return $this->hasMany(LogAktivitas::class);
     }
 
+    public function notifications()
+    {
+        return $this->hasMany(Notification::class)->latest();
+    }
+
+    public function unreadNotifications()
+    {
+        return $this->hasMany(Notification::class)->where('is_read', false)->latest();
+    }
+
     // ── Helpers ──────────────────────────────────────────────────
     public function isAdmin(): bool
     {
