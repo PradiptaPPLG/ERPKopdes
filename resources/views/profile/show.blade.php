@@ -4,51 +4,72 @@
 @section('breadcrumb', 'Profil Saya')
 
 @section('content')
-<div style="display:grid;grid-template-columns:300px 1fr;gap:24px;align-items:start;">
+<div style="display:grid;grid-template-columns:320px 1fr;gap:24px;align-items:start;">
 
-    {{-- Left Card: Profile Summary --}}
-    <div class="card" style="text-align:center;padding:28px 24px;border-radius:12px;box-shadow:0 4px 20px rgba(37,99,235,0.03);border:1px solid #dbeafe;background:linear-gradient(135deg, #f0f7ff 0%, #ffffff 100%);">
-        <div style="position:relative;display:inline-block;margin:0 auto 20px;">
+    {{-- Left Card: ID Card Style --}}
+    <div class="card" style="border-radius:24px;box-shadow:0 10px 30px rgba(14,116,144,0.06);border:1px solid #dbeafe;background:#fff;overflow:hidden;text-align:center;padding:0;">
+        
+        {{-- Top Teal-Blue Gradient Header with ID Card Slot --}}
+        <div style="height:135px;background:linear-gradient(135deg, #0e7490 0%, #0284c7 100%);position:relative;border-radius:0 0 50% 50% / 0 0 20px 20px;display:flex;justify-content:center;align-items:flex-start;overflow:hidden;">
+            {{-- ID Card Notch/Slot --}}
+            <div style="width:55px;height:12px;background:#f5f5f5;border-radius:6px;margin-top:14px;border:1px solid rgba(255,255,255,0.25);box-shadow:inset 0 2px 4px rgba(0,0,0,0.12);"></div>
+        </div>
+
+        {{-- Avatar overlapping the U-curve --}}
+        <div style="position:relative;display:inline-block;margin:-55px auto 16px;z-index:10;">
             @if($karyawan->foto_profil)
-            <img src="{{ Storage::url($karyawan->foto_profil) }}" class="avatar avatar-lg" style="margin:0 auto;width:120px;height:120px;border-radius:50%;object-fit:cover;border:4px solid #fff;box-shadow:0 8px 24px rgba(37,99,235,0.12);">
+            <img src="{{ Storage::url($karyawan->foto_profil) }}" style="width:110px;height:110px;border-radius:50%;object-fit:cover;border:5px solid #fff;box-shadow:0 6px 16px rgba(14,116,144,0.12);">
             @else
-            <div class="avatar avatar-lg" style="background:linear-gradient(135deg, #e0f2fe 0%, #bae6fd 100%);color:#0284c7;margin:0 auto;width:120px;height:120px;border-radius:50%;font-size:42px;font-weight:800;display:flex;align-items:center;justify-content:center;border:4px solid #fff;box-shadow:0 8px 24px rgba(37,99,235,0.12);">
+            <div style="background:linear-gradient(135deg, #e0f2fe 0%, #bae6fd 100%);color:#0284c7;width:110px;height:110px;border-radius:50%;font-size:38px;font-weight:800;display:flex;align-items:center;justify-content:center;border:5px solid #fff;box-shadow:0 6px 16px rgba(14,116,144,0.12);">
                 {{ strtoupper(substr($karyawan->name,0,1)) }}
             </div>
             @endif
         </div>
 
-        <h3 style="font-size:18px;font-weight:700;color:#0f172a;margin-bottom:6px;letter-spacing:-0.2px;">{{ $karyawan->name }}</h3>
-        <div style="font-size:12px;color:#475569;margin-bottom:16px;font-weight:500;">{{ $karyawan->email }}</div>
-
-        <div style="display:flex;gap:8px;justify-content:center;margin-bottom:24px;">
-            <span class="badge badge-info" style="padding:6px 12px;font-size:11px;border-radius:20px;background:#e0f2fe;color:#0369a1;border:1px solid #bae6fd;">{{ $karyawan->jabatanLabel() }}</span>
-            <span class="badge {{ $karyawan->status=='aktif' ? 'badge-success' : ($karyawan->status=='cuti' ? 'badge-warning' : 'badge-danger') }}" style="padding:6px 12px;font-size:11px;border-radius:20px;">
-                {{ ucfirst($karyawan->status) }}
-            </span>
+        {{-- Employee Name --}}
+        <h3 style="font-size:16px;font-weight:800;color:#0f172a;margin:0 16px 2px;letter-spacing:-0.2px;text-transform:uppercase;">{{ $karyawan->name }}</h3>
+        
+        {{-- Role/Jabatan with Side Lines --}}
+        <div style="display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:20px;padding:0 20px;">
+            <span style="flex:1;height:1px;background:#e2e8f0;max-width:35px;"></span>
+            <span style="font-size:11px;font-weight:600;color:#64748b;text-transform:capitalize;font-style:italic;">{{ $karyawan->jabatanLabel() }}</span>
+            <span style="flex:1;height:1px;background:#e2e8f0;max-width:35px;"></span>
         </div>
 
-        <div style="text-align:left;border-top:1px solid #e2e8f0;padding-top:20px;font-size:12px;display:flex;flex-direction:column;gap:12px;">
-            <div style="display:flex;justify-content:between;align-items:center;">
-                <span style="color:#64748b;">NIP</span>
-                <strong style="color:#1e293b;margin-left:auto;">{{ $karyawan->nip ?? '-' }}</strong>
+        {{-- ID Card Fields Layout --}}
+        <div style="display:grid;grid-template-columns:80px 12px 1fr;gap:10px 0;text-align:left;font-size:12px;color:#475569;padding:0 24px;margin-bottom:28px;font-family:'Inter', sans-serif;">
+            <div style="font-weight:700;color:#1e293b;">NIP</div>
+            <div style="color:#94a3b8;">:</div>
+            <div style="color:#334155;font-weight:500;">{{ $karyawan->nip ?? '-' }}</div>
+
+            <div style="font-weight:700;color:#1e293b;">NIK</div>
+            <div style="color:#94a3b8;">:</div>
+            <div style="color:#334155;font-weight:500;">{{ $karyawan->nik ?? '-' }}</div>
+
+            <div style="font-weight:700;color:#1e293b;">STATUS</div>
+            <div style="color:#94a3b8;">:</div>
+            <div>
+                <span class="badge {{ $karyawan->status=='aktif' ? 'badge-success' : ($karyawan->status=='cuti' ? 'badge-warning' : 'badge-danger') }}" style="font-size:10px;padding:2px 8px;border-radius:4px;font-weight:700;">
+                    {{ ucfirst($karyawan->status) }}
+                </span>
             </div>
-            <div style="display:flex;justify-content:between;align-items:center;">
-                <span style="color:#64748b;">NIK</span>
-                <strong style="color:#1e293b;margin-left:auto;">{{ $karyawan->nik ?? '-' }}</strong>
-            </div>
-            <div style="display:flex;justify-content:between;align-items:center;">
-                <span style="color:#64748b;">No. HP</span>
-                <strong style="color:#1e293b;margin-left:auto;">{{ $karyawan->no_hp ?? '-' }}</strong>
-            </div>
-            <div style="display:flex;justify-content:between;align-items:center;">
-                <span style="color:#64748b;">Shift Default</span>
-                <strong style="color:#1d4ed8;margin-left:auto;background:#eff6ff;padding:2px 8px;border-radius:4px;font-size:11px;border:1px solid #bfdbfe;">{{ $karyawan->shiftDefault?->nama_shift ?? 'Belum Diatur' }}</strong>
-            </div>
+
+            <div style="font-weight:700;color:#1e293b;">PHONE</div>
+            <div style="color:#94a3b8;">:</div>
+            <div style="color:#334155;font-weight:500;">{{ $karyawan->no_hp ?? '-' }}</div>
+
+            <div style="font-weight:700;color:#1e293b;">SHIFT</div>
+            <div style="color:#94a3b8;">:</div>
+            <div style="color:#0284c7;font-weight:700;">{{ $karyawan->shiftDefault?->nama_shift ?? 'Belum Diatur' }}</div>
+
+            <div style="font-weight:700;color:#1e293b;">EMAIL</div>
+            <div style="color:#94a3b8;">:</div>
+            <div style="color:#334155;font-weight:500;word-break:break-all;font-size:11px;">{{ $karyawan->email }}</div>
         </div>
 
-        <div style="margin-top:28px;">
-            <a href="{{ route('profile.edit') }}" class="btn" style="width:100%;justify-content:center;padding:10px;border-radius:8px;font-size:13px;background:linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);color:#fff;box-shadow:0 4px 12px rgba(37,99,235,0.2);font-weight:600;">
+        {{-- Edit Button --}}
+        <div style="padding:0 24px 28px;">
+            <a href="{{ route('profile.edit') }}" class="btn" style="width:100%;justify-content:center;padding:10px;border-radius:8px;font-size:13px;background:linear-gradient(135deg, #0e7490 0%, #0284c7 100%);color:#fff;box-shadow:0 4px 12px rgba(14,116,144,0.25);font-weight:600;border:none;display:flex;align-items:center;gap:6px;text-decoration:none;transition:all 0.2s;">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
                 </svg>

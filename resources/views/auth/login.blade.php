@@ -34,10 +34,10 @@
     </div>
 </div>
 
-<div style="display:flex;width:960px;min-height:580px;background:#fff;border-radius:8px;box-shadow:0 1px 3px rgba(0,0,0,0.08),0 4px 12px rgba(0,0,0,0.04);overflow:hidden;margin:20px auto;">
+<div style="display:flex;align-items:stretch;width:960px;min-height:580px;background:#fff;border-radius:8px;box-shadow:0 1px 3px rgba(0,0,0,0.08),0 4px 12px rgba(0,0,0,0.04);overflow:hidden;margin:20px auto;">
 
     {{-- LEFT: Brand Panel --}}
-    <div style="width:420px;background:#cc0000;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:60px 50px;position:relative;flex-shrink:0;">
+    <div style="width:420px;background:#cc0000;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:60px 50px;position:relative;flex-shrink:0;align-self:stretch;">
         <div style="position:absolute;bottom:0;left:0;width:100%;height:4px;background:#fff;"></div>
 
         <div style="width:120px;height:120px;background:#fff;border-radius:50%;display:flex;align-items:center;justify-content:center;margin-bottom:28px;padding:18px;">
