@@ -42,7 +42,8 @@ class KaryawanController extends Controller
     public function create()
     {
         $shifts = Shift::all();
-        return view('karyawan.create', compact('shifts'));
+        $kopdes = \App\Models\Kopdes::all();
+        return view('karyawan.create', compact('shifts', 'kopdes'));
     }
 
     public function store(Request $request)
@@ -62,6 +63,7 @@ class KaryawanController extends Controller
             'jabatan'         => ['required', Rule::in(['admin','ketua','sekretaris','bendahara','kasir','petugas_toko'])],
             'status'          => ['required', Rule::in(['aktif','nonaktif','cuti'])],
             'shift_default_id' => ['nullable', 'exists:shifts,id'],
+            'kopdes_id'       => ['nullable', 'exists:kopdes,id'],
             'foto_profil'     => ['nullable', 'image', 'max:2048'],
         ], [
             'nik.size'   => 'NIK harus 16 digit.',
@@ -96,7 +98,8 @@ class KaryawanController extends Controller
     public function edit(User $karyawan)
     {
         $shifts = Shift::all();
-        return view('karyawan.edit', compact('karyawan', 'shifts'));
+        $kopdes = \App\Models\Kopdes::all();
+        return view('karyawan.edit', compact('karyawan', 'shifts', 'kopdes'));
     }
 
     public function update(Request $request, User $karyawan)
@@ -116,6 +119,7 @@ class KaryawanController extends Controller
             'jabatan'         => ['required', Rule::in(['admin','ketua','sekretaris','bendahara','kasir','petugas_toko'])],
             'status'          => ['required', Rule::in(['aktif','nonaktif','cuti'])],
             'shift_default_id' => ['nullable', 'exists:shifts,id'],
+            'kopdes_id'       => ['nullable', 'exists:kopdes,id'],
             'foto_profil'     => ['nullable', 'image', 'max:2048'],
         ]);
 
@@ -278,6 +282,15 @@ class KaryawanController extends Controller
             $nip = trim($data['nip'] ?? '');
             $nik = trim($data['nik'] ?? '');
 
+            $nip = trim($data['nip'] ?? '');
+            $nik = trim($data['nik'] ?? '');
+            $kopdesName = trim($data['kopdes'] ?? '');
+            $kopdesId = null;
+
+            if ($kopdesName) {
+                $kopdesId = \App\Models\Kopdes::where('nama', 'like', "%{$kopdesName}%")->value('id');
+            }
+
             if ($nip && User::where('nip', $nip)->exists()) {
                 $gagal[] = "Baris {$baris}: NIP '{$nip}' sudah terdaftar, dilewati.";
                 continue;
@@ -306,6 +319,7 @@ class KaryawanController extends Controller
                     'tanggal_lahir' => trim($data['tanggal_lahir'] ?? '') ?: null,
                     'agama'         => trim($data['agama']         ?? '') ?: null,
                     'alamat'        => trim($data['alamat']        ?? '') ?: null,
+                    'kopdes_id'     => $kopdesId,
                 ]);
                 $berhasil++;
             } catch (\Exception $e) {
@@ -352,11 +366,11 @@ class KaryawanController extends Controller
             'Expires'             => '0',
         ];
 
-        $columns = ['name','email','password','jabatan','status','nip','nik','no_hp','jenis_kelamin','tempat_lahir','tanggal_lahir','agama','alamat'];
+        $columns = ['name','email','password','jabatan','status','nip','nik','no_hp','jenis_kelamin','tempat_lahir','tanggal_lahir','agama','alamat','kopdes'];
 
         $contoh = [
-            ['Budi Santoso','budi@kopdes.id','rahasia123','kasir','aktif','KD-2025-001','3201010101010001','081234567890','L','Jakarta','1990-01-01','Islam','Jl. Mawar No. 1'],
-            ['Siti Rahayu','siti@kopdes.id','rahasia123','petugas_toko','aktif','KD-2025-002','3201010101010002','082345678901','P','Bandung','1995-05-15','Islam','Jl. Melati No. 5'],
+            ['Budi Santoso','budi@kopdes.id','rahasia123','kasir','aktif','KD-2025-001','3201010101010001','081234567890','L','Jakarta','1990-01-01','Islam','Jl. Mawar No. 1','Kopdes Cijeungjing'],
+            ['Siti Rahayu','siti@kopdes.id','rahasia123','petugas_toko','aktif','KD-2025-002','3201010101010002','082345678901','P','Bandung','1995-05-15','Islam','Jl. Melati No. 5','Kopdes Dago'],
         ];
 
         $callback = function () use ($columns, $contoh) {

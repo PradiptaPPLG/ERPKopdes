@@ -37,7 +37,6 @@ class DashboardController extends Controller
             ->get();
 
         // ── Heatmap data (current month) ─────────────────────────
-        // Admin: agregat semua karyawan. Karyawan: hanya data milik sendiri.
         $heatmapQuery = Absensi::selectRaw('tanggal,
                 COUNT(*) as total,
                 SUM(status_kehadiran IN ("hadir","terlambat","sangat_terlambat")) as hadir,
@@ -70,10 +69,61 @@ class DashboardController extends Controller
             ->whereDate('tanggal', $today)
             ->first();
 
+        // ── Admin Analytical Maps & Charts Data ───────────────────
+        $kopdesList = collect();
+        $provinsiList = collect();
+        $chartKaryawanProvinsi = collect();
+        $chartKaryawanKopdes = collect();
+        $chartKaryawanAktif = collect();
+        $chartKehadiranGlobal = collect();
+
+        if ($user->isAdmin() || $user->canApprove()) {
+            $kopdesList = \App\Models\Kopdes::with(['users' => fn($q) => $q->where('status', '!=', 'nonaktif')])->get();
+            
+            $provinsiList = \App\Models\Kopdes::select('provinsi', DB::raw('count(*) as count'))
+                ->groupBy('provinsi')
+                ->get();
+
+            $chartKaryawanProvinsi = DB::table('users')
+                ->join('kopdes', 'users.kopdes_id', '=', 'kopdes.id')
+                ->where('users.status', '!=', 'nonaktif')
+                ->select('kopdes.provinsi', DB::raw('count(users.id) as count'))
+                ->groupBy('kopdes.provinsi')
+                ->get();
+
+            $chartKaryawanKopdes = DB::table('users')
+                ->join('kopdes', 'users.kopdes_id', '=', 'kopdes.id')
+                ->where('users.status', '!=', 'nonaktif')
+                ->select('kopdes.nama', DB::raw('count(users.id) as count'))
+                ->groupBy('kopdes.nama')
+                ->get();
+
+            // Paling aktif: status_kehadiran = 'hadir' (tepat waktu)
+            $chartKaryawanAktif = DB::table('absensi')
+                ->join('users', 'absensi.user_id', '=', 'users.id')
+                ->whereYear('absensi.tanggal', $year)
+                ->whereMonth('absensi.tanggal', $month)
+                ->where('absensi.status_kehadiran', 'hadir')
+                ->select('users.name', DB::raw('count(absensi.id) as total_tepat_waktu'))
+                ->groupBy('users.id', 'users.name')
+                ->orderBy('total_tepat_waktu', 'desc')
+                ->take(5)
+                ->get();
+
+            $chartKehadiranGlobal = DB::table('absensi')
+                ->whereYear('tanggal', $year)
+                ->whereMonth('tanggal', $month)
+                ->select('status_kehadiran', DB::raw('count(*) as count'))
+                ->groupBy('status_kehadiran')
+                ->get();
+        }
+
         return view('dashboard.index', compact(
             'totalKaryawan', 'hadirHariIni', 'terlambatHariIni', 'sangatTerlambatHariIni',
             'izinPending', 'absensiHariIni', 'heatmapData',
-            'izinTerbaru', 'myAbsensi', 'myJadwal', 'today', 'month', 'year'
+            'izinTerbaru', 'myAbsensi', 'myJadwal', 'today', 'month', 'year',
+            'kopdesList', 'provinsiList',
+            'chartKaryawanProvinsi', 'chartKaryawanKopdes', 'chartKaryawanAktif', 'chartKehadiranGlobal'
         ));
     }
 

@@ -15,7 +15,7 @@ class User extends Authenticatable
         'nik', 'nip', 'tempat_lahir', 'tanggal_lahir',
         'jenis_kelamin', 'agama', 'alamat', 'no_hp',
         'jabatan', 'status', 'foto_profil',
-        'tanda_tangan_digital', 'shift_default_id',
+        'tanda_tangan_digital', 'shift_default_id', 'kopdes_id',
     ];
 
     protected $hidden = ['password', 'remember_token'];
@@ -30,6 +30,11 @@ class User extends Authenticatable
     }
 
     // ── Relationships ────────────────────────────────────────────
+    public function kopdes()
+    {
+        return $this->belongsTo(Kopdes::class, 'kopdes_id');
+    }
+
     public function shiftDefault()
     {
         return $this->belongsTo(Shift::class, 'shift_default_id');

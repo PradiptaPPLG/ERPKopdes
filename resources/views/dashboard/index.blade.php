@@ -42,8 +42,8 @@
     @endif
 </div>
 
-{{-- ── My attendance status today ──────────────────────────── --}}
-@if($myJadwal)
+{{-- ── My attendance status today (non-admin only) ─────────── --}}
+@if(!auth()->user()->isAdmin() && $myJadwal)
 <div class="card" style="margin-bottom:20px;border-left:4px solid {{ $myJadwal->shift->kode_warna }};padding:16px 20px;">
     <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;">
         <div style="display:flex;align-items:center;gap:12px;">
@@ -145,6 +145,87 @@
     </div>
 
 </div>
+
+@if(auth()->user()->isAdmin())
+    {{-- Leaflet CSS & JS, Chart.js --}}
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    {{-- Peta Analitis Grid --}}
+    <div style="font-weight:700;font-size:15px;color:#cc0000;margin:24px 0 12px;display:flex;align-items:center;gap:6px;">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" style="width:20px;height:20px;">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
+        </svg>
+        <span>Pemetaan Wilayah & Koperasi Nasional</span>
+    </div>
+    
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:24px;">
+        <div class="card">
+            <div class="card-header">
+                <span class="card-title">Peta Sebaran Karyawan (Titik Kopdes)</span>
+            </div>
+            <div class="card-body" style="padding:16px;">
+                <div id="map-sebaran-titik" style="height:320px;border-radius:6px;border:1px solid #ddd;z-index:1;"></div>
+            </div>
+        </div>
+        <div class="card">
+            <div class="card-header">
+                <span class="card-title">Peta Densitas Regional (Zona Provinsi)</span>
+            </div>
+            <div class="card-body" style="padding:16px;">
+                <div id="map-sebaran-regional" style="height:320px;border-radius:6px;border:1px solid #ddd;z-index:1;"></div>
+            </div>
+        </div>
+    </div>
+
+    {{-- Grafik Analitis Grid --}}
+    <div style="font-weight:700;font-size:15px;color:#cc0000;margin:24px 0 12px;display:flex;align-items:center;gap:6px;">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" style="width:20px;height:20px;">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M11 3.055A9.001 9.001 0 1020.945 13H11V3.055z" />
+            <path stroke-linecap="round" stroke-linejoin="round" d="M20.488 9H15V3.512A9.025 9.025 0 0120.488 9z" />
+        </svg>
+        <span>Dashboard Analitik & Statistik</span>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:20px;">
+        <div class="card">
+            <div class="card-header">
+                <span class="card-title">Karyawan per Provinsi</span>
+            </div>
+            <div class="card-body" style="padding:16px;min-height:280px;display:flex;align-items:center;justify-content:center;">
+                <canvas id="chart-provinsi" style="max-height:260px;width:100%;"></canvas>
+            </div>
+        </div>
+        <div class="card">
+            <div class="card-header">
+                <span class="card-title">Distribusi Karyawan per Kopdes</span>
+            </div>
+            <div class="card-body" style="padding:16px;min-height:280px;display:flex;align-items:center;justify-content:center;">
+                <canvas id="chart-kopdes" style="max-height:260px;width:100%;"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:24px;">
+        <div class="card">
+            <div class="card-header">
+                <span class="card-title">Top 5 Karyawan Paling Aktif (Hadir Tepat Waktu Bulan Ini)</span>
+            </div>
+            <div class="card-body" style="padding:16px;min-height:280px;display:flex;align-items:center;justify-content:center;">
+                <canvas id="chart-aktif" style="max-height:260px;width:100%;"></canvas>
+            </div>
+        </div>
+        <div class="card">
+            <div class="card-header">
+                <span class="card-title">Status Kehadiran Karyawan Bulan Ini</span>
+            </div>
+            <div class="card-body" style="padding:16px;min-height:280px;display:flex;align-items:center;justify-content:center;">
+                <canvas id="chart-kehadiran" style="max-height:260px;width:100%;"></canvas>
+            </div>
+        </div>
+    </div>
+@endif
 
 {{-- ── Two column: Absensi list + Heatmap ─────────────────── --}}
 {{-- Admin: full width (no heatmap). Karyawan: 2-column with heatmap --}}
@@ -326,6 +407,304 @@
         </table>
     </div>
 </div>
+@endif
+
+@if(auth()->user()->isAdmin())
+@push('scripts')
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    // ── 1. Map 1: Point Map ───────────────────────────────────────
+    try {
+        const mapPoint = L.map('map-sebaran-titik').setView([-2.5489, 118.0149], 5);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; OpenStreetMap'
+        }).addTo(mapPoint);
+
+        const kopdesData = @json($kopdesList);
+        
+        kopdesData.forEach(kop => {
+            const lat = parseFloat(kop.latitude);
+            const lng = parseFloat(kop.longitude);
+            
+            let employeeList = '<ul style="margin:4px 0 0 16px;padding:0;font-size:11px;color:#333;">';
+            if (kop.users && kop.users.length > 0) {
+                kop.users.forEach(u => {
+                    employeeList += `<li>${u.name} (<span style="color:#cc0000;font-weight:600;">${u.jabatan}</span>)</li>`;
+                });
+            } else {
+                employeeList += '<li>Tidak ada karyawan</li>';
+            }
+            employeeList += '</ul>';
+
+            const popupContent = `
+                <div style="font-size:12px;width:220px;font-family:inherit;">
+                    <strong style="color:#cc0000;font-size:13px;display:block;margin-bottom:2px;">${kop.nama}</strong>
+                    <span style="color:#666;font-size:11px;line-height:1.3;display:block;">${kop.alamat}</span>
+                    <hr style="margin:6px 0;border:none;border-top:1px solid #ddd;">
+                    <strong>Karyawan (${kop.users.length}):</strong>
+                    ${employeeList}
+                    <div style="margin-top:8px;text-align:right;">
+                        <a href="/kopdes/${kop.id}" style="display:inline-block;font-size:11px;font-weight:700;color:#cc0000;text-decoration:none;background:#fff5f5;padding:3px 8px;border-radius:4px;border:1px solid #ffe3e3;">Inspect Detail &rarr;</a>
+                    </div>
+                </div>
+            `;
+
+            L.marker([lat, lng]).addTo(mapPoint)
+                .bindPopup(popupContent);
+        });
+
+        if (kopdesData.length > 0) {
+            const markers = kopdesData.map(k => L.marker([parseFloat(k.latitude), parseFloat(k.longitude)]));
+            const group = new L.featureGroup(markers);
+            mapPoint.fitBounds(group.getBounds().pad(0.15));
+        }
+
+    } catch (e) {
+        console.error('Error loading Point Map:', e);
+    }
+
+    // ── 2. Map 2: Regional Zonal Map ──────────────────────────────
+    try {
+        const mapReg = L.map('map-sebaran-regional').setView([-2.5489, 118.0149], 5);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; OpenStreetMap'
+        }).addTo(mapReg);
+
+        const provinceCenters = {
+            'Aceh':                  [4.6951,  96.7494],
+            'Sumatera Utara':        [2.1154,  99.5450],
+            'Sumatera Barat':        [-0.7399, 100.8000],
+            'Riau':                  [0.2933,  101.7068],
+            'Kepulauan Riau':        [3.9457,  108.1429],
+            'Jambi':                 [-1.6101, 103.6131],
+            'Sumatera Selatan':      [-3.3194, 103.9144],
+            'Bangka Belitung':       [-2.7411, 106.4406],
+            'Bengkulu':              [-3.7928, 102.2601],
+            'Lampung':               [-4.5585, 105.4068],
+            'DKI Jakarta':           [-6.2088, 106.8456],
+            'Banten':                [-6.4058, 106.0640],
+            'Jawa Barat':            [-6.9147, 107.6098],
+            'Jawa Tengah':           [-7.0051, 110.4381],
+            'DI Yogyakarta':         [-7.7956, 110.3695],
+            'Jawa Timur':            [-7.5360, 112.2384],
+            'Bali':                  [-8.4095, 115.1889],
+            'Nusa Tenggara Barat':   [-8.6529, 117.3616],
+            'Nusa Tenggara Timur':   [-8.6574, 121.0794],
+            'Kalimantan Barat':      [0.4766,  110.6889],
+            'Kalimantan Tengah':     [-1.6815, 113.3824],
+            'Kalimantan Selatan':    [-3.0926, 115.2838],
+            'Kalimantan Timur':      [1.6407,  116.4194],
+            'Kalimantan Utara':      [3.0731,  116.0413],
+            'Sulawesi Utara':        [0.6246,  123.9750],
+            'Sulawesi Tengah':       [-1.4300, 121.4456],
+            'Sulawesi Selatan':      [-3.6687, 119.9740],
+            'Sulawesi Tenggara':     [-4.1448, 122.1746],
+            'Gorontalo':             [0.6999,  122.4467],
+            'Sulawesi Barat':        [-2.8442, 119.2321],
+            'Maluku':                [-3.2385, 130.1453],
+            'Maluku Utara':          [1.5709,  127.8088],
+            'Papua':                 [-4.2699, 138.0804],
+            'Papua Selatan':         [-7.0100, 138.5100],
+            'Papua Tengah':          [-3.9913, 136.3801],
+            'Papua Pegunungan':      [-4.0000, 139.4000],
+        };
+
+        const regData = @json($provinsiList);
+        const regMarkers = [];
+        
+        regData.forEach(reg => {
+            const provName = reg.provinsi;
+            const count = parseInt(reg.count);
+            const center = provinceCenters[provName] || null;
+            
+            if (center) {
+                // Draw circle indicating density
+                const circle = L.circle(center, {
+                    color: '#cc0000',
+                    fillColor: '#cc0000',
+                    fillOpacity: 0.35,
+                    weight: 2,
+                    radius: 40000 + (count * 25000)
+                }).addTo(mapReg);
+
+                circle.bindPopup(`
+                    <div style="text-align:center;font-size:12px;font-family:inherit;">
+                        <strong style="color:#555;">Provinsi ${provName}</strong><br>
+                        <span style="font-size:16px;color:#cc0000;font-weight:800;display:block;margin-top:4px;">${count} Koperasi</span>
+                    </div>
+                `);
+
+                regMarkers.push(L.marker(center));
+            }
+        });
+
+        if (regMarkers.length > 0) {
+            const group = new L.featureGroup(regMarkers);
+            mapReg.fitBounds(group.getBounds().pad(0.2));
+        }
+
+    } catch (e) {
+        console.error('Error loading Regional Map:', e);
+    }
+
+    // ── 3. Chart 1: Karyawan per Provinsi ─────────────────────────
+    try {
+        const provData = @json($chartKaryawanProvinsi);
+        const labels = provData.map(d => d.provinsi);
+        const values = provData.map(d => d.count);
+
+        new Chart(document.getElementById('chart-provinsi'), {
+            type: 'bar',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Karyawan',
+                    data: values,
+                    backgroundColor: 'rgba(204, 0, 0, 0.7)',
+                    borderColor: 'rgba(204, 0, 0, 1)',
+                    borderWidth: 1.5,
+                    borderRadius: 4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                animation: {
+                    duration: 1600,
+                    easing: 'easeOutBack'
+                },
+                plugins: {
+                    legend: { display: false }
+                },
+                scales: {
+                    y: { beginAtZero: true, ticks: { precision: 0, color: '#666' }, grid: { color: '#f3f4f6' } },
+                    x: { ticks: { color: '#666' }, grid: { display: false } }
+                }
+            }
+        });
+    } catch (e) { console.error(e); }
+
+    // ── 4. Chart 2: Karyawan per Kopdes ───────────────────────────
+    try {
+        const kopData = @json($chartKaryawanKopdes);
+        const labels = kopData.map(d => d.nama);
+        const values = kopData.map(d => d.count);
+
+        new Chart(document.getElementById('chart-kopdes'), {
+            type: 'doughnut',
+            data: {
+                labels: labels,
+                datasets: [{
+                    data: values,
+                    backgroundColor: [
+                        '#cc0000', '#3b82f6', '#10b981', '#f59e0b', '#8b5cf6',
+                        '#ec4899', '#14b8a6', '#f97316', '#6b7280', '#06b6d4'
+                    ],
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                animation: {
+                    animateRotate: true,
+                    animateScale: true,
+                    duration: 1800,
+                    easing: 'easeOutQuart'
+                },
+                plugins: {
+                    legend: { position: 'right', labels: { boxWidth: 10, padding: 8, font: { size: 10 } } }
+                }
+            }
+        });
+    } catch (e) { console.error(e); }
+
+    // ── 5. Chart 3: Top 5 Karyawan Paling Aktif ─────────────────────
+    try {
+        const aktifData = @json($chartKaryawanAktif);
+        const labels = aktifData.map(d => d.name);
+        const values = aktifData.map(d => d.total_tepat_waktu);
+
+        new Chart(document.getElementById('chart-aktif'), {
+            type: 'bar',
+            data: {
+                labels: labels,
+                datasets: [{
+                    data: values,
+                    backgroundColor: 'rgba(16, 185, 129, 0.75)',
+                    borderColor: 'rgba(16, 185, 129, 1)',
+                    borderWidth: 1.5,
+                    borderRadius: 4
+                }]
+            },
+            options: {
+                indexAxis: 'y',
+                responsive: true,
+                maintainAspectRatio: false,
+                animation: {
+                    duration: 1600,
+                    easing: 'easeOutBack'
+                },
+                plugins: { legend: { display: false } },
+                scales: {
+                    x: { beginAtZero: true, ticks: { precision: 0, color: '#666' }, grid: { color: '#f3f4f6' } },
+                    y: { ticks: { color: '#666' }, grid: { display: false } }
+                }
+            }
+        });
+    } catch (e) { console.error(e); }
+
+    // ── 6. Chart 4: Status Kehadiran Global ───────────────────────
+    try {
+        const globalData = @json($chartKehadiranGlobal);
+        
+        const statusMap = {
+            'hadir': 'Tepat Waktu',
+            'terlambat': 'Terlambat Ringan',
+            'sangat_terlambat': 'Sangat Terlambat',
+            'alpa': 'Alpa',
+            'izin': 'Izin/Sakit'
+        };
+        const colorMap = {
+            'hadir': '#10b981',
+            'terlambat': '#f59e0b',
+            'sangat_terlambat': '#ef4444',
+            'alpa': '#9ca3af',
+            'izin': '#3b82f6'
+        };
+
+        const labels = globalData.map(d => statusMap[d.status_kehadiran] || d.status_kehadiran);
+        const values = globalData.map(d => d.count);
+        const colors = globalData.map(d => colorMap[d.status_kehadiran] || '#cbd5e1');
+
+        new Chart(document.getElementById('chart-kehadiran'), {
+            type: 'pie',
+            data: {
+                labels: labels,
+                datasets: [{
+                    data: values,
+                    backgroundColor: colors,
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                animation: {
+                    animateRotate: true,
+                    animateScale: true,
+                    duration: 1800,
+                    easing: 'easeOutQuart'
+                },
+                plugins: {
+                    legend: { position: 'right', labels: { boxWidth: 10, padding: 8, font: { size: 10 } } }
+                }
+            }
+        });
+    } catch (e) { console.error(e); }
+});
+</script>
+@endpush
 @endif
 
 @endsection

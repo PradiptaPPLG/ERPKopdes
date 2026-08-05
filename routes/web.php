@@ -6,6 +6,7 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\IzinCutiController;
 use App\Http\Controllers\JadwalShiftController;
 use App\Http\Controllers\KaryawanController;
+use App\Http\Controllers\KopdesController;
 use App\Http\Controllers\LaporanController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\ProfileController;
@@ -65,6 +66,11 @@ Route::middleware('auth')->group(function () {
         Route::post('/karyawan/import-csv',    [KaryawanController::class, 'importCsv'])->name('karyawan.import-csv');
         Route::get('/karyawan/template-csv',   [KaryawanController::class, 'templateCsv'])->name('karyawan.template-csv');
         Route::resource('karyawan', KaryawanController::class);
+
+        // Kopdes
+        Route::resource('kopdes', KopdesController::class)->parameters([
+            'kopdes' => 'kopde'
+        ]);
 
         // Shift
         Route::resource('shift', ShiftController::class)->except(['show']);

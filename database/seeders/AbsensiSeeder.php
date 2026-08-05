@@ -13,7 +13,8 @@ class AbsensiSeeder extends Seeder
 {
     public function run(): void
     {
-        $users = User::where('status', 'aktif')->get();
+        // Load users with their assigned Kopdes
+        $users = User::with('kopdes')->where('status', 'aktif')->get();
         $today = Carbon::today();
 
         // Seed last 30 days of attendance
@@ -65,18 +66,25 @@ class AbsensiSeeder extends Seeder
                 $jamMasukActual  = $jamMulai->copy()->addMinutes($terlambatMenit)->addSeconds(rand(0, 59));
                 $jamPulangActual = $jamSelesai->copy()->addMinutes(rand(-10, 30));
 
+                // Ambil koordinat Kopdes penugasan karyawan
+                $kopdes = $user->kopdes;
+                $latBase = $kopdes ? (double)$kopdes->latitude : -6.200000;
+                $lngBase = $kopdes ? (double)$kopdes->longitude : 106.816666;
+                $namaKopdes = $kopdes ? $kopdes->nama : 'Kopdes';
+
                 $absensi = Absensi::create([
                     'user_id'           => $user->id,
                     'jadwal_id'         => $jadwal->id,
                     'tanggal'           => $tanggal->format('Y-m-d'),
                     'jam_masuk'         => $jamMasukActual->format('H:i:s'),
                     'jam_pulang'        => $jamPulangActual->format('H:i:s'),
-                    'latitude_masuk'    => -6.200000 + (rand(-100, 100) / 10000),
-                    'longitude_masuk'   => 106.816666 + (rand(-100, 100) / 10000),
-                    'latitude_pulang'   => -6.200000 + (rand(-100, 100) / 10000),
-                    'longitude_pulang'  => 106.816666 + (rand(-100, 100) / 10000),
-                    'lokasi_masuk'      => 'Kantor Koperasi Desa Maju Bersama',
-                    'lokasi_pulang'     => 'Kantor Koperasi Desa Maju Bersama',
+                    // Beri deviasi acak tipis di sekitar kantor (dalam radius ~50 meter)
+                    'latitude_masuk'    => $latBase + (rand(-50, 50) / 1000000),
+                    'longitude_masuk'   => $lngBase + (rand(-50, 50) / 1000000),
+                    'latitude_pulang'   => $latBase + (rand(-50, 50) / 1000000),
+                    'longitude_pulang'  => $lngBase + (rand(-50, 50) / 1000000),
+                    'lokasi_masuk'      => 'Kantor ' . $namaKopdes,
+                    'lokasi_pulang'     => 'Kantor ' . $namaKopdes,
                     'status_kehadiran'  => $statusKehadiran,
                     'keterlambatan_menit' => $terlambatMenit,
                     'metode_absen_masuk'  => 'manual',

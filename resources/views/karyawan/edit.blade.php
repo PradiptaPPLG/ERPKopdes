@@ -44,7 +44,7 @@
                     </div>
                 </div>
 
-                <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;">
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
                     <div class="form-group">
                         <label class="form-label">Jabatan <span class="required">*</span></label>
                         <select name="jabatan" class="form-control" required>
@@ -61,6 +61,9 @@
                             <option value="nonaktif" {{ old('status', $karyawan->status)=='nonaktif' ? 'selected':'' }}>Nonaktif</option>
                         </select>
                     </div>
+                </div>
+
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
                     <div class="form-group">
                         <label class="form-label">Shift Default</label>
                         <select name="shift_default_id" class="form-control">
@@ -71,6 +74,18 @@
                             </option>
                             @endforeach
                         </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Kopdes Penugasan <span class="required">*</span></label>
+                        <select name="kopdes_id" class="form-control" required>
+                            <option value="" disabled selected>Pilih Koperasi Desa</option>
+                            @foreach($kopdes as $kop)
+                            <option value="{{ $kop->id }}" {{ old('kopdes_id', $karyawan->kopdes_id) == $kop->id ? 'selected' : '' }}>
+                                {{ $kop->nama }} (Desa {{ $kop->desa ?? '-' }}, {{ $kop->provinsi ?? '-' }})
+                            </option>
+                            @endforeach
+                        </select>
+                        @error('kopdes_id') <div class="form-error">{{ $message }}</div> @enderror
                     </div>
                 </div>
 

@@ -47,7 +47,7 @@
         </div>
 
         <h1 style="font-size:22px;font-weight:700;color:#fff;text-align:center;line-height:1.3;margin-bottom:8px;letter-spacing:-0.3px;">
-            Koperasi Desa<br>Maju Bersama
+            Koperasi Desa<br>Nasional
         </h1>
         <div style="width:50px;height:2px;background:rgba(255,255,255,0.5);margin:20px 0;"></div>
         <p style="font-size:13px;color:rgba(255,255,255,0.85);text-align:center;line-height:1.5;">
@@ -149,16 +149,10 @@
         </form>
 
         <div style="text-align:center;margin-top:28px;font-size:11px;color:#999;">
-            &copy; {{ date('Y') }} Koperasi Desa Maju Bersama &mdash; ERP v1.0
+            &copy; {{ date('Y') }} Koperasi Desa Nasional &mdash; ERP v1.0
         </div>
 
-        {{-- Demo hint (remove in production) --}}
-        <div style="margin-top:16px;padding:12px;background:#f9fafb;border-radius:6px;border:1px dashed #e5e5e5;font-size:11px;color:#888;">
-            <strong style="color:#555;">Demo login:</strong><br>
-            admin@kopdes.id / admin123 &nbsp;|&nbsp;
-            ketua@kopdes.id / ketua123<br>
-            kasir1@kopdes.id / kasir123
-        </div>
+    
     </div>
 
 </div>

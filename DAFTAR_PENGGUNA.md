@@ -1,5 +1,5 @@
 # 🔐 DAFTAR AKUN PENGGUNA (USERNAME & PASSWORD & ROLE)
-## Sistem ERP Koperasi Desa (Kopdes) Maju Bersama
+## Sistem ERP Koperasi Desa (Kopdes) Nasional
 
 Berikut adalah daftar lengkap akun pengguna yang dapat digunakan untuk masuk (login) ke dalam sistem ERP Kopdes:
 

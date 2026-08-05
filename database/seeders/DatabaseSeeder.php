@@ -10,6 +10,7 @@ class DatabaseSeeder extends Seeder
     {
         $this->call([
             ShiftSeeder::class,    // Must run first (users FK to shifts)
+            KopdesSeeder::class,
             UserSeeder::class,
             AbsensiSeeder::class,  // Creates jadwal_shifts + absensi + tanda_tangan
             IzinCutiSeeder::class,

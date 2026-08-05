@@ -252,6 +252,8 @@
                         <div><code style="background:#f3f4f6;padding:1px 5px;border-radius:3px;">no_hp</code> – Nomor HP</div>
                         <div><code style="background:#f3f4f6;padding:1px 5px;border-radius:3px;">jenis_kelamin</code> – L / P</div>
                         <div><code style="background:#f3f4f6;padding:1px 5px;border-radius:3px;">tanggal_lahir</code> – YYYY-MM-DD</div>
+                        <div><code style="background:#f3f4f6;padding:1px 5px;border-radius:3px;">kopdes</code> – Nama Kopdes penugasan</div>
+                        <div><code style="background:#f3f4f6;padding:1px 5px;border-radius:3px;">alamat</code> – Alamat tempat tinggal</div>
                     </div>
                     <div style="margin-top:6px;font-size:10px;color:#999;"><span style="color:#dc2626;font-weight:700;">*</span> = kolom wajib diisi</div>
                 </div>

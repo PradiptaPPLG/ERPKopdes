@@ -1,5 +1,5 @@
 # 📚 BUKU PANDUAN PENGGUNA (ERP KOPDES)
-### Sistem Informasi ERP Koperasi Desa Maju Bersama
+### Sistem Informasi ERP Koperasi Desa Nasional
 
 Buku panduan ini menjelaskan arsitektur alur kerja, pembagian tugas per peran (role), dan tata cara operasional untuk seluruh fitur utama di dalam sistem ERP Kopdes.
 
