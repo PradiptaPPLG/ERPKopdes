@@ -180,58 +180,119 @@ class KaryawanController extends Controller
 
         $file = $request->file('csv_file');
 
-        // Cek ekstensi manual (lebih toleran dari MIME check)
         $ekstensi = strtolower($file->getClientOriginalExtension());
         if (!in_array($ekstensi, ['csv', 'txt'])) {
             return back()->with('error', 'File harus berformat .csv');
         }
 
-        $path    = $file->getRealPath();
-        $konten  = file_get_contents($path);
+        $path   = $file->getRealPath();
+        $konten = file_get_contents($path);
 
-        // ── Strip BOM (Byte Order Mark) yang ditambahkan Excel ────
-        $konten  = preg_replace('/^\xEF\xBB\xBF/', '', $konten);
-
-        // Simpan ke file temp agar bisa dibaca fgetcsv
-        $tmp = tmpfile();
-        fwrite($tmp, $konten);
-        rewind($tmp);
-
-        // ── Auto-detect delimiter: coba koma dulu, kalau gagal coba titik koma ──
-        $barisPertama = fgets($tmp);
-        rewind($tmp);
-        $delimiter = (substr_count($barisPertama, ';') > substr_count($barisPertama, ',')) ? ';' : ',';
-
-        // ── Baca header, skip baris kosong di awal ────────────────
-        $header = null;
-        while (($row = fgetcsv($tmp, 0, $delimiter)) !== false) {
-            if (empty(array_filter($row))) continue; // skip baris kosong
-            // Strip BOM dari cell pertama header (jaga-jaga)
-            $row[0] = preg_replace('/^\xEF\xBB\xBF/', '', $row[0]);
-            // Trim semua nama kolom
-            $header = array_map(fn($h) => strtolower(trim($h)), $row);
-            break;
+        // Convert UTF-16 to UTF-8 if Excel-encoded
+        $bom = substr($konten, 0, 2);
+        if ($bom === "\xFF\xFE" || $bom === "\xFE\xFF") {
+            $konten = mb_convert_encoding($konten, 'UTF-8', 'UTF-16');
+        } elseif (strpos($konten, "\0") !== false) {
+            $konten = mb_convert_encoding($konten, 'UTF-8', 'UTF-16');
         }
 
-        if (!$header || !in_array('name', $header) || !in_array('email', $header)) {
-            fclose($tmp);
-            return back()->with('error', 'Format CSV tidak valid. Pastikan baris pertama berisi header: name, email, password, jabatan, dst. Unduh template untuk contoh yang benar.');
+        // ── Strip BOM (ditambahkan Excel) ─────────────────────────
+        $konten = preg_replace('/^\xEF\xBB\xBF/', '', $konten);
+
+        // Normalisasi line ending (CRLF → LF)
+        $konten = str_replace("\r\n", "\n", $konten);
+        $konten = str_replace("\r",   "\n", $konten);
+
+        // Auto-heal accidental newlines (e.g. name field split into two lines without quotes)
+        $lines = explode("\n", $konten);
+        $cleanLines = [];
+        $tempLine = '';
+        foreach ($lines as $line) {
+            $trimmed = trim($line);
+            if ($trimmed === '') continue;
+            
+            // If the line has fewer than 3 delimiters, it is likely a split line fragment
+            if (substr_count($trimmed, ',') < 3 && substr_count($trimmed, ';') < 3) {
+                $tempLine .= ($tempLine === '' ? '' : ' ') . $trimmed;
+            } else {
+                $cleanLines[] = ($tempLine === '' ? '' : $tempLine . ' ') . $trimmed;
+                $tempLine = '';
+            }
+        }
+        if ($tempLine !== '') {
+            $cleanLines[] = $tempLine;
+        }
+        $konten = implode("\n", $cleanLines);
+
+        // ── Auto-detect delimiter ─────────────────────────────────
+        $firstLine = $cleanLines[0] ?? '';
+        $delimiter = (substr_count($firstLine, ';') > substr_count($firstLine, ',')) ? ';' : ',';
+
+        // ── Baca & normalisasi semua baris menggunakan str_getcsv ─
+        $allRows = [];
+        foreach ($cleanLines as $line) {
+            $row = str_getcsv($line, $delimiter);
+            $row = array_map('trim', $row);
+            if (empty(array_filter($row))) continue;
+
+            // Auto-heal single-cell pasting mistake (when Excel wraps the entire CSV line in quotes)
+            if (count($row) === 1) {
+                $singleCell = $row[0];
+                $cellDelimiter = (substr_count($singleCell, ';') > substr_count($singleCell, ',')) ? ';' : ',';
+                if (substr_count($singleCell, $cellDelimiter) >= 3) {
+                    $row = str_getcsv($singleCell, $cellDelimiter);
+                    $row = array_map('trim', $row);
+                }
+            }
+
+            $allRows[] = $row;
+        }
+
+        if (empty($allRows)) {
+            return back()->with('error', 'File CSV kosong atau tidak bisa dibaca.');
+        }
+
+        // ── Auto-detect apakah baris pertama adalah header ────────
+        // Header valid: cell pertama berisi teks mirip "name" atau "nama"
+        $kolomWajib = ['name', 'email', 'password', 'jabatan'];
+        $barisPertamaRow = array_map(fn($h) => strtolower(preg_replace('/^\xEF\xBB\xBF/', '', $h)), $allRows[0]);
+
+        $isHeader = count(array_intersect($kolomWajib, $barisPertamaRow)) >= 2;
+
+        if ($isHeader) {
+            $header   = $barisPertamaRow;
+            $dataRows = array_slice($allRows, 1);
+        } else {
+            // Baris pertama adalah data — gunakan urutan kolom dari template
+            $header   = ['name','email','password','jabatan','status','nip','nik','no_hp','jenis_kelamin','tempat_lahir','tanggal_lahir','agama','alamat','kopdes'];
+            $dataRows = $allRows;
+        }
+
+        if (empty($dataRows)) {
+            return back()->with('error', 'Tidak ada baris data di dalam file CSV.');
         }
 
         $berhasil     = 0;
         $gagal        = [];
-        $baris        = 1;
+        $baris        = $isHeader ? 1 : 0;
         $jabatanValid = ['admin','ketua','sekretaris','bendahara','kasir','petugas_toko'];
         $statusValid  = ['aktif','nonaktif','cuti'];
 
-        // ── Proses baris data ─────────────────────────────────────
-        while (($row = fgetcsv($tmp, 0, $delimiter)) !== false) {
+        foreach ($dataRows as $row) {
             $baris++;
 
-            // Skip baris kosong
-            if (empty(array_filter($row))) continue;
+            // Auto-heal split date of birth (e.g. 2009-02,23 due to comma typo instead of hyphen)
+            if (count($row) > count($header)) {
+                for ($idx = 0; $idx < count($row) - 1; $idx++) {
+                    if (preg_match('/^\d{4}-\d{2}$/', $row[$idx]) && preg_match('/^\d{1,2}$/', $row[$idx + 1])) {
+                        $row[$idx] = $row[$idx] . '-' . sprintf('%02d', $row[$idx + 1]);
+                        array_splice($row, $idx + 1, 1);
+                        break;
+                    }
+                }
+            }
 
-            // Sesuaikan jumlah kolom agar array_combine tidak error
+            // Sesuaikan jumlah kolom
             $jumlahHeader = count($header);
             $jumlahRow    = count($row);
             if ($jumlahRow > $jumlahHeader) {
@@ -250,10 +311,9 @@ class KaryawanController extends Controller
 
             // ── Validasi kolom wajib ──────────────────────────────
             $errors = [];
-
-            if (!$name)     $errors[] = 'name kosong';
-            if (!$email)    $errors[] = 'email kosong';
-            if (!$password) $errors[] = 'password kosong';
+            if (!$name)     $errors[] = 'kolom [name] kosong';
+            if (!$email)    $errors[] = 'kolom [email] kosong';
+            if (!$password) $errors[] = 'kolom [password] kosong';
 
             if (!empty($errors)) {
                 $gagal[] = "Baris {$baris}: " . implode(', ', $errors) . '.';
@@ -261,46 +321,59 @@ class KaryawanController extends Controller
             }
 
             if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
-                $gagal[] = "Baris {$baris}: format email '{$email}' tidak valid.";
+                $gagal[] = "Baris {$baris}: format email '{$email}' tidak valid — pastikan format seperti nama@domain.com";
                 continue;
             }
 
             if (User::where('email', $email)->exists()) {
-                $gagal[] = "Baris {$baris}: email '{$email}' sudah terdaftar, dilewati.";
+                $gagal[] = "Baris {$baris}: email '{$email}' sudah terdaftar, baris dilewati.";
                 continue;
             }
 
             if (!in_array($jabatan, $jabatanValid)) {
-                $gagal[] = "Baris {$baris}: jabatan '{$jabatan}' tidak dikenal. Pilihan: " . implode(', ', $jabatanValid) . '.';
+                $gagal[] = "Baris {$baris}: jabatan '{$jabatan}' tidak dikenal. Pilihan yang valid: " . implode(', ', $jabatanValid) . '.';
                 continue;
             }
 
             if (!in_array($status, $statusValid)) {
-                $status = 'aktif'; // fallback, tidak blok
+                $status = 'aktif';
             }
-
-            $nip = trim($data['nip'] ?? '');
-            $nik = trim($data['nik'] ?? '');
 
             $nip = trim($data['nip'] ?? '');
             $nik = trim($data['nik'] ?? '');
             $kopdesName = trim($data['kopdes'] ?? '');
-            $kopdesId = null;
+            $kopdesId   = null;
 
             if ($kopdesName) {
                 $kopdesId = \App\Models\Kopdes::where('nama', 'like', "%{$kopdesName}%")->value('id');
+                if (!$kopdesId) {
+                    $gagal[] = "Baris {$baris}: Kopdes '{$kopdesName}' tidak ditemukan di database, karyawan tetap diimport tanpa Kopdes.";
+                }
             }
 
             if ($nip && User::where('nip', $nip)->exists()) {
-                $gagal[] = "Baris {$baris}: NIP '{$nip}' sudah terdaftar, dilewati.";
+                $gagal[] = "Baris {$baris}: NIP '{$nip}' sudah terdaftar, baris dilewati.";
                 continue;
             }
 
-            // NIK: hanya validasi jika diisi DAN bukan 16 digit → warning tapi tetap import
             if ($nik && strlen($nik) !== 16) {
-                // Lanjutkan import tapi NIK dikosongkan & catat peringatan
-                $gagal[] = "Baris {$baris}: NIK '{$nik}' bukan 16 digit, kolom NIK dilewati (data lain tetap diimport).";
+                $gagal[] = "Baris {$baris}: NIK '{$nik}' harus tepat 16 digit (sekarang " . strlen($nik) . " digit), kolom NIK dikosongkan — data lain tetap diimport.";
                 $nik = '';
+            }
+
+            // ── Sanitasi tanggal lahir ────────────────────────────
+            // Toleransi: "2009-02,23" → "2009-02-23", "2009/02/23" → "2009-02-23"
+            $tanggalLahirRaw = trim($data['tanggal_lahir'] ?? '');
+            $tanggalLahir    = null;
+            if ($tanggalLahirRaw) {
+                // Ganti pemisah yang salah (koma, slash) → strip
+                $tgl = preg_replace('/[,\/]/', '-', $tanggalLahirRaw);
+                // Pastikan format YYYY-MM-DD valid
+                if (preg_match('/^\d{4}-\d{2}-\d{2}$/', $tgl)) {
+                    $tanggalLahir = $tgl;
+                } else {
+                    $gagal[] = "Baris {$baris}: format tanggal_lahir '{$tanggalLahirRaw}' tidak dikenal, gunakan YYYY-MM-DD (contoh: 2009-02-23). Kolom tanggal dikosongkan.";
+                }
             }
 
             // ── Simpan ke database ────────────────────────────────
@@ -316,7 +389,7 @@ class KaryawanController extends Controller
                     'no_hp'         => trim($data['no_hp']         ?? '') ?: null,
                     'jenis_kelamin' => strtoupper(trim($data['jenis_kelamin'] ?? '')) ?: null,
                     'tempat_lahir'  => trim($data['tempat_lahir']  ?? '') ?: null,
-                    'tanggal_lahir' => trim($data['tanggal_lahir'] ?? '') ?: null,
+                    'tanggal_lahir' => $tanggalLahir,
                     'agama'         => trim($data['agama']         ?? '') ?: null,
                     'alamat'        => trim($data['alamat']        ?? '') ?: null,
                     'kopdes_id'     => $kopdesId,
@@ -326,8 +399,6 @@ class KaryawanController extends Controller
                 $gagal[] = "Baris {$baris}: gagal disimpan — {$e->getMessage()}.";
             }
         }
-
-        fclose($tmp);
 
         LogAktivitas::catat('import_karyawan', "Import CSV: {$berhasil} karyawan berhasil ditambahkan.");
 

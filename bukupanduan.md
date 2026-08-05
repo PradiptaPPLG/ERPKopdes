@@ -104,3 +104,6 @@ Jika pegawai berhalangan hadir (Sakit atau Izin Keperluan Lain):
    - Dashboard Admin akan menampilkan pemberitahuan permohonan tertunda (*pending*) pada bagian bawah ringkasan.
 3. **Persetujuan (Admin):** 
    - Admin meninjau berkas alasan dan memutuskan untuk menyetujui (*Approve*) atau menolak permohonan tersebut. Setelah disetujui, hari kerja yang diajukan otomatis tercatat sebagai "Izin/Sakit" di laporan akhir.
+
+Alyzza Nazwa, alyzza@gmail.com, alyzza123,petugas_toko,aktif,KD-2025-009,0203320092233,098726378881,P,Ciamis,2009-02-23,Islam,"Jl. Melati No. 5","Kopdes Dago"
+csv valid
