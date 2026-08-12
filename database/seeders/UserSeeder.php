@@ -185,6 +185,24 @@ class UserSeeder extends Seeder
                 'shift_default_id' => 1,
                 'kopdes_id'       => $kopdesMedanBaru,
             ],
+            // User Dummy 1
+            [
+                'name'            => 'Pradipta Endra Maulana',
+                'email'           => 'pradipta02032009@gmail.com',
+                'password'        => Hash::make('02032009'),
+                'nik'             => '3276389173647382',
+                'nip'             => 'KD-2009-0010',
+                'tempat_lahir'    => 'Ciamis',
+                'tanggal_lahir'   => '2009-03-02',
+                'jenis_kelamin'   => 'L',
+                'agama'           => 'Islam',
+                'alamat'          => 'Jl. Pahlawan No. 45, Cijeungjing, Ciamis',
+                'no_hp'           => '085219583336',
+                'jabatan'         => 'petugas_toko',
+                'status'          => 'aktif',
+                'shift_default_id' => 1,
+                'kopdes_id'       => $kopdesCijeungjing,
+            ],
         ];
 
         foreach ($users as $user) {
