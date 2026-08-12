@@ -203,6 +203,24 @@ class UserSeeder extends Seeder
                 'shift_default_id' => 1,
                 'kopdes_id'       => $kopdesCijeungjing,
             ],
+            // User Dummy 2
+            [
+                'name'            => 'Fathin',
+                'email'           => 'fathin@gmail.com',
+                'password'        => Hash::make('fathin123'),
+                'nik'             => '3276378473891237',
+                'nip'             => 'KD-2009-0011',
+                'tempat_lahir'    => 'Ciamis',
+                'tanggal_lahir'   => '2009-05-04',
+                'jenis_kelamin'   => 'L',
+                'agama'           => 'Islam',
+                'alamat'          => 'Jl. Pahlawan No. 45, Cijeungjing, Ciamis',
+                'no_hp'           => '085273846663',
+                'jabatan'         => 'petugas_toko',
+                'status'          => 'aktif',
+                'shift_default_id' => 1,
+                'kopdes_id'       => $kopdesCijeungjing,
+            ],
         ];
 
         foreach ($users as $user) {
