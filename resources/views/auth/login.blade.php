@@ -38,7 +38,7 @@
 
     {{-- LEFT: Brand Panel --}}
     <div style="width:420px;background:#cc0000;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:60px 50px;position:relative;flex-shrink:0;align-self:stretch;">
-        <div style="position:absolute;bottom:0;left:0;width:100%;height:4px;background:#fff;"></div>
+
 
         <div style="width:120px;height:120px;background:#fff;border-radius:50%;display:flex;align-items:center;justify-content:center;margin-bottom:28px;padding:18px;">
             <img src="{{ asset('images/logos/kopdes.png') }}" alt="Logo Kopdes"
