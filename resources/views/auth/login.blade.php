@@ -80,6 +80,15 @@
         <div class="alert alert-success">{{ session('success') }}</div>
         @endif
 
+        @if(session('warning'))
+        <div class="alert alert-warning">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" style="flex-shrink:0;margin-top:1px;">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+            </svg>
+            <span>{{ session('warning') }}</span>
+        </div>
+        @endif
+
         {{-- Login Form --}}
         <form method="POST" action="{{ route('login.post') }}" id="loginForm">
             @csrf
@@ -137,8 +146,8 @@
                 </a>
             </div>
 
-            {{-- Submit - tidak submit langsung, buka modal captcha --}}
-            <button type="button" id="btnLogin" onclick="openCaptchaModal()"
+            {{-- Submit - memanggil handleLoginAttempt untuk cek 2FA secara dinamis --}}
+            <button type="button" id="btnLogin" onclick="handleLoginAttempt()"
                     class="btn btn-primary" style="width:100%;justify-content:center;padding:11px;font-size:13px;">
                 <span id="btnText">Masuk</span>
                 <svg id="btnSpinner" xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" style="display:none;animation:spin 0.8s linear infinite;">
@@ -173,9 +182,30 @@ function togglePassword() {
     pwd.type = pwd.type === 'password' ? 'text' : 'password';
 }
 
-/* ── CAPTCHA MODAL ─────────────────────────────── */
-function openCaptchaModal() {
-    // Validasi form dulu sebelum buka modal
+/* ── CAPTCHA MODAL / 2FA CHECKER ───────────────── */
+let has2FA = false;
+
+async function checkUser2FA(email) {
+    try {
+        const response = await fetch("{{ route('login.check-2fa') }}", {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': '{{ csrf_token() }}'
+            },
+            body: JSON.stringify({ email: email })
+        });
+        if (response.ok) {
+            const data = await response.json();
+            return data.has_2fa;
+        }
+    } catch (e) {
+        console.error("Gagal memeriksa status 2FA:", e);
+    }
+    return false;
+}
+
+async function handleLoginAttempt() {
     const email    = document.getElementById('email').value.trim();
     const password = document.getElementById('password').value.trim();
 
@@ -184,6 +214,27 @@ function openCaptchaModal() {
         return;
     }
 
+    // Tampilkan loading spinner pada tombol utama
+    const btnText = document.getElementById('btnText');
+    const btnSpinner = document.getElementById('btnSpinner');
+    btnText.style.opacity = '0.5';
+    btnSpinner.style.display = 'inline';
+
+    // Cek status 2FA
+    has2FA = await checkUser2FA(email);
+
+    if (has2FA) {
+        // User memiliki 2FA: Bypass Captcha sepenuhnya dan langsung submit password
+        document.getElementById('loginForm').submit();
+    } else {
+        // User tidak memiliki 2FA: Tampilkan Captcha Modal
+        btnText.style.opacity = '1';
+        btnSpinner.style.display = 'none';
+        openCaptchaModal();
+    }
+}
+
+function openCaptchaModal() {
     // Reset captcha widget agar selalu fresh
     if (typeof grecaptcha !== 'undefined') {
         grecaptcha.reset();
@@ -211,7 +262,7 @@ function onCaptchaSuccess(token) {
     document.getElementById('captchaToken').value = token;
 
     // Tampilkan spinner pada tombol
-    document.getElementById('btnText').style.opacity  = '0';
+    document.getElementById('btnText').style.opacity  = '0.5';
     document.getElementById('btnSpinner').style.display = 'inline';
 
     // Submit form

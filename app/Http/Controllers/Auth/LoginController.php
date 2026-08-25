@@ -6,6 +6,9 @@ use App\Http\Controllers\Controller;
 use App\Models\LogAktivitas;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\RateLimiter;
+use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 
 class LoginController extends Controller
@@ -20,37 +23,93 @@ class LoginController extends Controller
 
     public function login(Request $request)
     {
-        $request->validate([
-            'email'                => ['required', 'email'],
-            'password'             => ['required'],
-            'g-recaptcha-response' => ['required'],
-        ], [
+        // Pengecekan awal: apakah user ada dan mengaktifkan 2FA
+        $userToCheck = \App\Models\User::where('email', $request->input('email'))->first();
+        $has2fa = $userToCheck ? $userToCheck->hasTwoFactorEnabled() : false;
+
+        // Validasi input
+        $rules = [
+            'email'    => ['required', 'email'],
+            'password' => ['required'],
+        ];
+
+        // Hanya wajibkan captcha jika user TIDAK memiliki 2FA
+        if (!$has2fa) {
+            $rules['g-recaptcha-response'] = ['required'];
+        }
+
+        $messages = [
             'email.required'                => 'Email harus diisi.',
             'email.email'                   => 'Format email tidak valid.',
             'password.required'             => 'Password harus diisi.',
             'g-recaptcha-response.required' => 'Verifikasi captcha wajib diisi.',
-        ]);
+        ];
 
-        // Verifikasi token reCAPTCHA ke API Google
-        $secretKey = config('services.recaptcha.secret_key');
-        $response  = $request->input('g-recaptcha-response');
+        $request->validate($rules, $messages);
 
-        $verification = \Illuminate\Support\Facades\Http::asForm()->post('https://www.google.com/recaptcha/api/siteverify', [
-            'secret'   => $secretKey,
-            'response' => $response,
-            'remoteip' => $request->ip(),
-        ]);
+        $throttleKey = Str::transliterate(Str::lower($request->input('email')) . '|' . $request->ip());
 
-        if (!$verification->json('success')) {
+        if (RateLimiter::tooManyAttempts($throttleKey, 5)) {
+            $seconds = RateLimiter::availableIn($throttleKey);
             throw ValidationException::withMessages([
-                'email' => 'Verifikasi captcha gagal. Silakan coba lagi.',
+                'email' => "Terlalu banyak percobaan login. Silakan coba lagi dalam {$seconds} detik.",
             ]);
+        }
+
+        // Verifikasi token reCAPTCHA ke API Google (hanya jika tidak memakai 2FA)
+        if (!$has2fa) {
+            $secretKey = config('services.recaptcha.secret_key');
+            $response  = $request->input('g-recaptcha-response');
+
+            $verification = \Illuminate\Support\Facades\Http::asForm()->post('https://www.google.com/recaptcha/api/siteverify', [
+                'secret'   => $secretKey,
+                'response' => $response,
+                'remoteip' => $request->ip(),
+            ]);
+
+            if (!$verification->json('success')) {
+                throw ValidationException::withMessages([
+                    'email' => 'Verifikasi captcha gagal. Silakan coba lagi.',
+                ]);
+            }
         }
 
         $credentials = $request->only('email', 'password');
         $remember    = $request->boolean('remember');
 
+        // Cek kecocokan password dan status user tanpa mengautentikasi session penuh dulu jika ada 2FA
+        if ($has2fa) {
+            // Validasi kredensial secara manual menggunakan Auth::validate()
+            if (!Auth::validate($credentials)) {
+                RateLimiter::hit($throttleKey, 60);
+                throw ValidationException::withMessages([
+                    'email' => 'Email atau password salah.',
+                ]);
+            }
+
+            $user = \App\Models\User::where('email', $credentials['email'])->first();
+
+            if ($user->status === 'nonaktif') {
+                throw ValidationException::withMessages([
+                    'email' => 'Akun Anda telah dinonaktifkan. Hubungi administrator.',
+                ]);
+            }
+
+            RateLimiter::clear($throttleKey);
+
+            // Simpan ID user ke session sementara untuk 2FA Challenge
+            session([
+                'auth.2fa.user_id' => $user->id,
+                'auth.2fa.remember' => $remember
+            ]);
+
+            // Arahkan ke halaman tantangan kode 2FA
+            return redirect()->route('login.2fa');
+        }
+
+        // Alur login normal jika tidak ada 2FA
         if (!Auth::attempt($credentials, $remember)) {
+            RateLimiter::hit($throttleKey, 60);
             throw ValidationException::withMessages([
                 'email' => 'Email atau password salah.',
             ]);
@@ -65,7 +124,12 @@ class LoginController extends Controller
             ]);
         }
 
+        RateLimiter::clear($throttleKey);
+
         $request->session()->regenerate();
+
+        // Simpan ID sesi baru di Cache untuk memvalidasi login tunggal (One Session)
+        Cache::put('user_session_' . $user->id, $request->session()->getId());
 
         LogAktivitas::catat('login', "User {$user->name} ({$user->jabatan}) login ke sistem.");
 

@@ -81,6 +81,54 @@
     {{-- Right Column: Detailed Info & History --}}
     <div style="display:flex;flex-direction:column;gap:24px;">
 
+        {{-- 2FA Security Management Card --}}
+        <div class="card" style="border-radius:12px;box-shadow:0 4px 20px rgba(220,38,38,0.02);border:1px solid #e2e8f0;overflow:hidden;background:#fff;">
+            <div class="card-header" style="background:linear-gradient(90deg, #f8fafc 0%, #f1f5f9 100%);border-bottom:1px solid #e2e8f0;padding:18px 24px;display:flex;align-items:center;gap:8px;">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="#cc0000" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                </svg>
+                <span class="card-title" style="font-size:15px;color:#0f172a;font-weight:700;">Keamanan Dua Langkah (2FA)</span>
+            </div>
+            <div class="card-body" style="padding:24px;">
+                <div style="display:flex;align-items:center;justify-content:space-between;gap:20px;flex-wrap:wrap;">
+                    <div style="flex:1;">
+                        <p style="font-size:13px;color:#475569;line-height:1.5;margin:0 0 8px;">
+                            Tambahkan lapisan keamanan ekstra pada akun Anda. Setelah diaktifkan, masuk ke sistem memerlukan password dan kode verifikasi satu kali (OTP) dari aplikasi Google Authenticator di perangkat seluler Anda.
+                        </p>
+                        <div style="display:inline-flex;align-items:center;gap:6px;">
+                            <span style="font-size:11px;color:#64748b;font-weight:600;text-transform:uppercase;">Status 2FA:</span>
+                            @if($karyawan->hasTwoFactorEnabled())
+                                <span class="badge badge-success" style="font-size:10px;padding:3px 8px;border-radius:4px;font-weight:700;">AKTIF</span>
+                            @else
+                                <span class="badge badge-danger" style="font-size:10px;padding:3px 8px;border-radius:4px;font-weight:700;">TIDAK AKTIF</span>
+                            @endif
+                        </div>
+                    </div>
+
+                    <div style="flex-shrink:0;">
+                        @if($karyawan->hasTwoFactorEnabled())
+                            <form method="POST" action="{{ route('profile.2fa.disable') }}" onsubmit="return confirm('Apakah Anda yakin ingin menonaktifkan keamanan 2FA? Keamanan akun Anda akan berkurang.');">
+                                @csrf
+                                <button type="submit" class="btn" style="border-radius:8px;font-size:12px;background:#ef4444;color:#fff;border:none;padding:10px 16px;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;gap:6px;transition:all 0.2s;">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                    </svg>
+                                    Nonaktifkan 2FA
+                                </button>
+                            </form>
+                        @else
+                            <a href="{{ route('profile.2fa.setup') }}" class="btn" style="border-radius:8px;font-size:12px;background:linear-gradient(135deg, #0e7490 0%, #0284c7 100%);color:#fff;padding:10px 16px;font-weight:600;display:inline-flex;align-items:center;gap:6px;text-decoration:none;transition:all 0.2s;">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
+                                </svg>
+                                Siapkan Keamanan 2FA
+                            </a>
+                        @endif
+                    </div>
+                </div>
+            </div>
+        </div>
+
         {{-- Detail Card --}}
         <div class="card" style="border-radius:12px;box-shadow:0 4px 20px rgba(37,99,235,0.02);border:1px solid #e2e8f0;overflow:hidden;background:#fff;">
             <div class="card-header" style="background:linear-gradient(90deg, #f8fafc 0%, #f1f5f9 100%);border-bottom:1px solid #e2e8f0;padding:18px 24px;">

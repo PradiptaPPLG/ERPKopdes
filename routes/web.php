@@ -20,6 +20,11 @@ Route::get('/login',  [LoginController::class, 'showLoginForm'])->name('login');
 Route::post('/login', [LoginController::class, 'login'])->name('login.post');
 Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
 
+// Rute Publik untuk Otentikasi Dua Faktor (2FA)
+Route::post('/login/check-2fa', [\App\Http\Controllers\Auth\TwoFactorController::class, 'check2fa'])->name('login.check-2fa');
+Route::get('/login/2fa', [\App\Http\Controllers\Auth\TwoFactorController::class, 'showChallenge'])->name('login.2fa');
+Route::post('/login/2fa', [\App\Http\Controllers\Auth\TwoFactorController::class, 'verifyChallenge'])->name('login.2fa.post');
+
 // ── Authenticated routes ───────────────────────────────────────
 Route::middleware('auth')->group(function () {
 
@@ -95,4 +100,9 @@ Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'show'])->name('profile.show');
     Route::get('/profile/edit', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::put('/profile/update', [ProfileController::class, 'update'])->name('profile.update');
+
+    // ── Profile 2FA Setup ───────────────────────────────────────
+    Route::get('/profile/2fa/setup', [\App\Http\Controllers\Auth\TwoFactorController::class, 'setup'])->name('profile.2fa.setup');
+    Route::post('/profile/2fa/confirm', [\App\Http\Controllers\Auth\TwoFactorController::class, 'confirm'])->name('profile.2fa.confirm');
+    Route::post('/profile/2fa/disable', [\App\Http\Controllers\Auth\TwoFactorController::class, 'disable'])->name('profile.2fa.disable');
 });

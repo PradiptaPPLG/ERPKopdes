@@ -16,6 +16,7 @@ class User extends Authenticatable
         'jenis_kelamin', 'agama', 'alamat', 'no_hp',
         'jabatan', 'status', 'foto_profil',
         'tanda_tangan_digital', 'shift_default_id', 'kopdes_id',
+        'two_factor_secret', 'two_factor_confirmed_at',
     ];
 
     protected $hidden = ['password', 'remember_token'];
@@ -23,9 +24,10 @@ class User extends Authenticatable
     protected function casts(): array
     {
         return [
-            'email_verified_at' => 'datetime',
-            'password'          => 'hashed',
-            'tanggal_lahir'     => 'date',
+            'email_verified_at'       => 'datetime',
+            'password'                => 'hashed',
+            'tanggal_lahir'           => 'date',
+            'two_factor_confirmed_at' => 'datetime',
         ];
     }
 
@@ -97,5 +99,10 @@ class User extends Authenticatable
     public function absensiHariIni()
     {
         return $this->absensi()->where('tanggal', today())->first();
+    }
+
+    public function hasTwoFactorEnabled(): bool
+    {
+        return !is_null($this->two_factor_secret) && !is_null($this->two_factor_confirmed_at);
     }
 }
