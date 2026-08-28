@@ -420,11 +420,12 @@
 </div>
 @endif
 
-@if(auth()->user()->isAdmin())
+@if(auth()->user()->isAdmin() || $isBranchManager)
 @push('scripts')
 <script>
 document.addEventListener('DOMContentLoaded', () => {
     // ── 1. Map 1: Point Map ───────────────────────────────────────
+    @if(auth()->user()->isAdmin())
     try {
         const mapPoint = L.map('map-sebaran-titik').setView([-2.5489, 118.0149], 5);
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -610,7 +611,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     backgroundColor: [
                         '#cc0000', '#3b82f6', '#10b981', '#f59e0b', '#8b5cf6',
                         '#ec4899', '#14b8a6', '#f97316', '#6b7280', '#06b6d4'
-                    ],
+                     ],
                     borderWidth: 1
                 }]
             },
@@ -629,6 +630,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
     } catch (e) { console.error(e); }
+    @endif
 
     // ── 5. Chart 3: Top 5 Karyawan Paling Aktif ─────────────────────
     try {
