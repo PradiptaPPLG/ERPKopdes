@@ -239,26 +239,26 @@ function setGpsFallback() {
         const text   = document.getElementById(`gps_text_${type}`);
         if (!latEl) return;
 
-        // Pakai koordinat fallback kantor (disimpan server, tidak ditampilkan)
-        document.getElementById(`lat_${type}`).value = '-6.200000';
-        document.getElementById(`lng_${type}`).value = '106.816666';
-        document.getElementById(`lokasi_${type}`).value = 'Lokasi Manual';
+        // Kosongkan koordinat
+        document.getElementById(`lat_${type}`).value = '';
+        document.getElementById(`lng_${type}`).value = '';
+        document.getElementById(`lokasi_${type}`).value = 'GPS Dinonaktifkan';
 
         if (status) {
-            status.style.background = '#fffbeb';
-            status.style.borderColor = '#fcd34d';
-            status.style.color = '#92400e';
+            status.style.background = '#fef2f2';
+            status.style.borderColor = '#fca5a5';
+            status.style.color = '#991b1b';
         }
-        if (text) text.innerHTML = '⚠ GPS tidak tersedia, menggunakan lokasi default';
+        if (text) text.innerHTML = '<strong>❌ GPS Wajib diaktifkan untuk melakukan absensi.</strong>';
         const spinner = document.getElementById(`gps_spinner_${type}`);
         if (spinner) {
             spinner.style.animation = 'none';
-            spinner.style.stroke = '#d97706';
+            spinner.style.stroke = '#dc2626';
         }
-        // Tetap aktifkan tombol agar karyawan bisa absen
+        // Nonaktifkan tombol absen agar tidak bisa mem-bypass geofence
         if (btn) {
-            btn.disabled = false;
-            btn.style.opacity = '1';
+            btn.disabled = true;
+            btn.style.opacity = '0.6';
         }
     });
 }

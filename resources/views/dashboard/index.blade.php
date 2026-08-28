@@ -12,12 +12,17 @@
             Selamat Datang, {{ auth()->user()->name }}!
         </h2>
         <p style="font-size:13px;color:#888;margin-top:2px;">
-            {{ $today->translatedFormat('l, d F Y') }} - {{ auth()->user()->jabatanLabel() }}
+            {{ $today->translatedFormat('l, d F Y') }} - 
+            @if($isBranchManager)
+                Manager Kopdes {{ $managedKopdes->nama }}
+            @else
+                {{ auth()->user()->jabatanLabel() }}
+            @endif
         </p>
     </div>
 
     {{-- Admin: monitor buttons. Staff: absen button --}}
-    @if(auth()->user()->isAdmin())
+    @if(auth()->user()->isAdmin() || $isBranchManager)
     <div style="display:flex;gap:10px;">
         <a href="{{ route('absensi.index') }}" class="btn btn-secondary">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
@@ -42,8 +47,8 @@
     @endif
 </div>
 
-{{-- ── My attendance status today (non-admin only) ─────────── --}}
-@if(!auth()->user()->isAdmin() && $myJadwal)
+{{-- ── My attendance status today (non-admin / non-manager only) ─────────── --}}
+@if(!auth()->user()->isAdmin() && !$isBranchManager && $myJadwal)
 <div class="card" style="margin-bottom:20px;border-left:4px solid {{ $myJadwal->shift->kode_warna }};padding:16px 20px;">
     <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;">
         <div style="display:flex;align-items:center;gap:12px;">
@@ -98,7 +103,7 @@
         <div>
             <div class="stat-value">{{ $totalKaryawan }}</div>
             <div class="stat-label">Total Karyawan</div>
-            <div class="stat-sub">Status aktif & cuti</div>
+            <div class="stat-sub">{{ $isBranchManager ? 'Cabang ' . $managedKopdes->nama : 'Status aktif & cuti' }}</div>
         </div>
     </div>
 
@@ -146,12 +151,15 @@
 
 </div>
 
-@if(auth()->user()->isAdmin())
+@if(auth()->user()->isAdmin() || $isBranchManager)
     {{-- Leaflet CSS & JS, Chart.js --}}
+    @if(auth()->user()->isAdmin())
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    @endif
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
+    @if(auth()->user()->isAdmin())
     {{-- Peta Analitis Grid --}}
     <div style="font-weight:700;font-size:15px;color:#cc0000;margin:24px 0 12px;display:flex;align-items:center;gap:6px;">
         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" style="width:20px;height:20px;">
@@ -178,6 +186,7 @@
             </div>
         </div>
     </div>
+    @endif
 
     {{-- Grafik Analitis Grid --}}
     <div style="font-weight:700;font-size:15px;color:#cc0000;margin:24px 0 12px;display:flex;align-items:center;gap:6px;">
@@ -185,9 +194,10 @@
             <path stroke-linecap="round" stroke-linejoin="round" d="M11 3.055A9.001 9.001 0 1020.945 13H11V3.055z" />
             <path stroke-linecap="round" stroke-linejoin="round" d="M20.488 9H15V3.512A9.025 9.025 0 0120.488 9z" />
         </svg>
-        <span>Dashboard Analitik & Statistik</span>
+        <span>Dashboard Analitik &amp; Statistik {{ $isBranchManager ? 'Cabang ' . $managedKopdes->nama : 'Nasional' }}</span>
     </div>
 
+    @if(auth()->user()->isAdmin())
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:20px;">
         <div class="card">
             <div class="card-header">
@@ -206,6 +216,7 @@
             </div>
         </div>
     </div>
+    @endif
 
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:24px;">
         <div class="card">
@@ -228,8 +239,8 @@
 @endif
 
 {{-- ── Two column: Absensi list + Heatmap ─────────────────── --}}
-{{-- Admin: full width (no heatmap). Karyawan: 2-column with heatmap --}}
-<div style="display:grid;grid-template-columns:{{ auth()->user()->isAdmin() ? '1fr' : '1fr 340px' }};gap:20px;margin-bottom:20px;">
+{{-- Admin/Manager: full width (no heatmap). Karyawan: 2-column with heatmap --}}
+<div style="display:grid;grid-template-columns:{{ (auth()->user()->isAdmin() || $isBranchManager) ? '1fr' : '1fr 340px' }};gap:20px;margin-bottom:20px;">
 
     {{-- Absensi hari ini --}}
     <div class="card">

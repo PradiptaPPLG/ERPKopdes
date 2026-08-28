@@ -30,6 +30,10 @@
                     <strong style="font-size:16px;color:#cc0000;">{{ $kopde->nama }}</strong>
                 </div>
                 <div>
+                    <span style="color:#6b7280;display:block;margin-bottom:2px;">Manager Cabang:</span>
+                    <strong style="font-size:14px;color:#1e293b;">{{ $kopde->manager ? $kopde->manager->name : 'Belum Ditunjuk' }}</strong>
+                </div>
+                <div>
                     <span style="color:#6b7280;display:block;margin-bottom:2px;">Alamat Lengkap:</span>
                     <strong style="color:#111827;line-height:1.4;">{{ $kopde->alamat }}</strong>
                 </div>
@@ -53,7 +57,7 @@
                         <strong style="color:#111827;">{{ $kopde->provinsi ?? '-' }}</strong>
                     </div>
                 </div>
-                <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;padding-top:10px;border-top:1px solid #eee;">
+                <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;padding-top:10px;border-top:1px solid #eee;">
                     <div>
                         <span style="color:#6b7280;display:block;margin-bottom:2px;">Latitude:</span>
                         <code style="font-weight:700;">{{ $kopde->latitude }}</code>
@@ -61,6 +65,10 @@
                     <div>
                         <span style="color:#6b7280;display:block;margin-bottom:2px;">Longitude:</span>
                         <code style="font-weight:700;">{{ $kopde->longitude }}</code>
+                    </div>
+                    <div>
+                        <span style="color:#6b7280;display:block;margin-bottom:2px;">Radius Geofence:</span>
+                        <strong style="color:#0284c7;font-weight:700;">{{ $kopde->radius_meter }} Meter</strong>
                     </div>
                 </div>
             </div>
@@ -141,9 +149,10 @@ document.addEventListener('DOMContentLoaded', () => {
     try {
         const lat = {{ $kopde->latitude }};
         const lng = {{ $kopde->longitude }};
+        const radius = {{ $kopde->radius_meter }};
         
         // Inisialisasi Peta
-        const map = L.map('kopdes-map').setView([lat, lng], 14);
+        const map = L.map('kopdes-map').setView([lat, lng], 15);
         
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
             attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
@@ -153,6 +162,14 @@ document.addEventListener('DOMContentLoaded', () => {
         L.marker([lat, lng]).addTo(map)
             .bindPopup("<strong>{{ $kopde->nama }}</strong><br>{{ $kopde->alamat }}")
             .openPopup();
+
+        // Tambahkan Lingkaran Geofence
+        L.circle([lat, lng], {
+            color: '#cc0000',
+            fillColor: '#f03',
+            fillOpacity: 0.15,
+            radius: radius
+        }).addTo(map);
             
     } catch (error) {
         console.error('Error loading Leaflet map:', error);

@@ -16,6 +16,8 @@ class Kopdes extends Model
         'alamat',
         'latitude',
         'longitude',
+        'radius_meter',
+        'manager_id',
         'desa',
         'kecamatan',
         'kabupaten',
@@ -26,5 +28,11 @@ class Kopdes extends Model
     public function users()
     {
         return $this->hasMany(User::class, 'kopdes_id');
+    }
+
+    // Relasi ke User (Manager Cabang)
+    public function manager()
+    {
+        return $this->belongsTo(User::class, 'manager_id');
     }
 }

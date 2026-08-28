@@ -47,6 +47,9 @@
                         <td>
                             <div style="font-weight:700;color:#cc0000;font-size:14px;">{{ $kop->nama }}</div>
                             <div style="font-size:11px;color:#888;margin-top:2px;">ID: #{{ sprintf('%03d', $kop->id) }}</div>
+                            <div style="font-size:11px;color:#4b5563;margin-top:4px;">
+                                <strong>Manager:</strong> {{ $kop->manager ? $kop->manager->name : 'Belum Ditunjuk' }}
+                            </div>
                         </td>
                         <td>
                             <div style="font-size:13px;color:#374151;line-height:1.4;">{{ $kop->alamat }}</div>
@@ -55,6 +58,9 @@
                                 Desa: {{ $kop->desa ?? '-' }} &bull; Kec: {{ $kop->kecamatan ?? '-' }}
                             </div>
                             @endif
+                            <div style="font-size:10px;color:#0284c7;font-family:monospace;margin-top:4px;">
+                                GPS: {{ $kop->latitude }}, {{ $kop->longitude }} (Radius: {{ $kop->radius_meter }}m)
+                            </div>
                         </td>
                         <td>
                             <div style="font-weight:600;font-size:13px;">{{ $kop->provinsi ?? '-' }}</div>

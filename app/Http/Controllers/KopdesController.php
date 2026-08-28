@@ -10,7 +10,7 @@ class KopdesController extends Controller
 {
     public function index(Request $request)
     {
-        $query = Kopdes::withCount('users')->latest();
+        $query = Kopdes::with(['manager', 'users'])->withCount('users')->latest();
 
         if ($request->filled('search')) {
             $s = $request->search;
@@ -27,20 +27,23 @@ class KopdesController extends Controller
 
     public function create()
     {
-        return view('kopdes.create');
+        $managers = \App\Models\User::orderBy('name')->get();
+        return view('kopdes.create', compact('managers'));
     }
 
     public function store(Request $request)
     {
         $data = $request->validate([
-            'nama'      => ['required', 'string', 'max:150'],
-            'alamat'    => ['required', 'string'],
-            'latitude'  => ['required', 'numeric', 'between:-90,90'],
-            'longitude' => ['required', 'numeric', 'between:-180,180'],
-            'desa'      => ['nullable', 'string', 'max:100'],
-            'kecamatan' => ['nullable', 'string', 'max:100'],
-            'kabupaten' => ['nullable', 'string', 'max:100'],
-            'provinsi'  => ['nullable', 'string', 'max:100'],
+            'nama'         => ['required', 'string', 'max:150'],
+            'alamat'       => ['required', 'string'],
+            'latitude'     => ['required', 'numeric', 'between:-90,90'],
+            'longitude'    => ['required', 'numeric', 'between:-180,180'],
+            'radius_meter' => ['required', 'integer', 'min:5'],
+            'manager_id'   => ['nullable', 'exists:users,id'],
+            'desa'         => ['nullable', 'string', 'max:100'],
+            'kecamatan'    => ['nullable', 'string', 'max:100'],
+            'kabupaten'    => ['nullable', 'string', 'max:100'],
+            'provinsi'     => ['nullable', 'string', 'max:100'],
         ]);
 
         $kopdes = Kopdes::create($data);
@@ -57,26 +60,29 @@ class KopdesController extends Controller
     public function show(Kopdes $kopde) // Note: route model binding matches parameter name `kopde` or `kopdes` based on routes
     {
         // Fitur "Inspect" untuk melihat siapa saja karyawan/pegawai yang terdaftar di Kopdes ini
-        $kopde->load(['users' => fn($q) => $q->latest()]);
+        $kopde->load(['users' => fn($q) => $q->latest(), 'manager']);
         return view('kopdes.show', compact('kopde'));
     }
 
     public function edit(Kopdes $kopde)
     {
-        return view('kopdes.edit', compact('kopde'));
+        $managers = \App\Models\User::orderBy('name')->get();
+        return view('kopdes.edit', compact('kopde', 'managers'));
     }
 
     public function update(Request $request, Kopdes $kopde)
     {
         $data = $request->validate([
-            'nama'      => ['required', 'string', 'max:150'],
-            'alamat'    => ['required', 'string'],
-            'latitude'  => ['required', 'numeric', 'between:-90,90'],
-            'longitude' => ['required', 'numeric', 'between:-180,180'],
-            'desa'      => ['nullable', 'string', 'max:100'],
-            'kecamatan' => ['nullable', 'string', 'max:100'],
-            'kabupaten' => ['nullable', 'string', 'max:100'],
-            'provinsi'  => ['nullable', 'string', 'max:100'],
+            'nama'         => ['required', 'string', 'max:150'],
+            'alamat'       => ['required', 'string'],
+            'latitude'     => ['required', 'numeric', 'between:-90,90'],
+            'longitude'    => ['required', 'numeric', 'between:-180,180'],
+            'radius_meter' => ['required', 'integer', 'min:5'],
+            'manager_id'   => ['nullable', 'exists:users,id'],
+            'desa'         => ['nullable', 'string', 'max:100'],
+            'kecamatan'    => ['nullable', 'string', 'max:100'],
+            'kabupaten'    => ['nullable', 'string', 'max:100'],
+            'provinsi'     => ['nullable', 'string', 'max:100'],
         ]);
 
         $kopde->update($data);

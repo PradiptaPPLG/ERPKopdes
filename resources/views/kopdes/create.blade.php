@@ -66,6 +66,26 @@
                         </div>
                     </div>
 
+                    <div style="display:grid;grid-template-columns:1fr 1.5fr;gap:12px;">
+                        <div class="form-group">
+                            <label class="form-label">Radius Absen (Meter) <span class="required">*</span></label>
+                            <input type="number" name="radius_meter" id="radius_meter" value="{{ old('radius_meter', '50') }}" min="5" class="form-control" placeholder="Contoh: 50" required>
+                            @error('radius_meter') <div class="form-error">{{ $message }}</div> @enderror
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Manager Cabang</label>
+                            <select name="manager_id" id="manager_id" class="form-control" style="appearance:auto;">
+                                <option value="">-- Pilih Manager --</option>
+                                @foreach($managers as $m)
+                                    <option value="{{ $m->id }}" {{ old('manager_id') == $m->id ? 'selected' : '' }}>
+                                        {{ $m->name }} ({{ $m->jabatanLabel() }})
+                                    </option>
+                                @endforeach
+                            </select>
+                            @error('manager_id') <div class="form-error">{{ $message }}</div> @enderror
+                        </div>
+                    </div>
+
                     <div style="display:flex;gap:12px;justify-content:flex-end;margin-top:10px;">
                         <a href="{{ route('kopdes.index') }}" class="btn btn-secondary">Batal</a>
                         <button type="submit" class="btn btn-primary">Simpan Kopdes</button>

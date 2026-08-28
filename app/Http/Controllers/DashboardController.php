@@ -19,22 +19,43 @@ class DashboardController extends Controller
         $year    = $today->year;
         $user    = auth()->user();
 
-        // ── Summary cards ─────────────────────────────────────────
-        $totalKaryawan = User::where('status', '!=', 'nonaktif')->count();
-        $hadirHariIni  = Absensi::whereDate('tanggal', $today)
+        // Deteksi apakah user bertindak sebagai Manager Kopdes Cabang tertentu
+        $managedKopdes = \App\Models\Kopdes::where('manager_id', $user->id)->first();
+        $isBranchManager = !is_null($managedKopdes);
+
+        // ── Summary cards (Dengan filter Manager) ───────────────────
+        $karyawanQuery = User::where('status', '!=', 'nonaktif');
+        $absensiQuery = Absensi::whereDate('tanggal', $today);
+        $izinQuery = IzinCuti::where('status', 'pending');
+
+        if ($isBranchManager) {
+            $karyawanQuery->where('kopdes_id', $managedKopdes->id);
+            $absensiQuery->whereHas('user', fn($q) => $q->where('kopdes_id', $managedKopdes->id));
+            $izinQuery->whereHas('user', fn($q) => $q->where('kopdes_id', $managedKopdes->id));
+        }
+
+        $totalKaryawan = $karyawanQuery->count();
+        
+        $hadirHariIni  = (clone $absensiQuery)
             ->whereIn('status_kehadiran', ['hadir', 'terlambat', 'sangat_terlambat'])->count();
-        $terlambatHariIni = Absensi::whereDate('tanggal', $today)
+            
+        $terlambatHariIni = (clone $absensiQuery)
             ->whereIn('status_kehadiran', ['terlambat', 'sangat_terlambat'])->count();
-        $sangatTerlambatHariIni = Absensi::whereDate('tanggal', $today)
+            
+        $sangatTerlambatHariIni = (clone $absensiQuery)
             ->where('status_kehadiran', 'sangat_terlambat')->count();
-        $izinPending   = IzinCuti::where('status', 'pending')->count();
+            
+        $izinPending   = $izinQuery->count();
 
         // ── Today's attendance list ───────────────────────────────
-        $absensiHariIni = Absensi::with(['user', 'jadwal.shift'])
-            ->whereDate('tanggal', $today)
-            ->latest()
-            ->take(8)
-            ->get();
+        $absensiListQuery = Absensi::with(['user', 'jadwal.shift'])
+            ->whereDate('tanggal', $today);
+
+        if ($isBranchManager) {
+            $absensiListQuery->whereHas('user', fn($q) => $q->where('kopdes_id', $managedKopdes->id));
+        }
+
+        $absensiHariIni = $absensiListQuery->latest()->take(8)->get();
 
         // ── Heatmap data (current month) ─────────────────────────
         $heatmapQuery = Absensi::selectRaw('tanggal,
@@ -46,7 +67,9 @@ class DashboardController extends Controller
             ->whereYear('tanggal', $year)
             ->whereMonth('tanggal', $month);
 
-        if (! $user->isAdmin()) {
+        if ($isBranchManager) {
+            $heatmapQuery->whereHas('user', fn($q) => $q->where('kopdes_id', $managedKopdes->id));
+        } elseif (! $user->isAdmin()) {
             $heatmapQuery->where('user_id', $user->id);
         }
 
@@ -56,11 +79,13 @@ class DashboardController extends Controller
             ->keyBy(fn($r) => Carbon::parse($r->tanggal)->format('Y-m-d'));
 
         // ── Pending izin list ─────────────────────────────────────
-        $izinTerbaru = IzinCuti::with('user')
-            ->where('status', 'pending')
-            ->latest()
-            ->take(5)
-            ->get();
+        $izinTerbaruQuery = IzinCuti::with('user')->where('status', 'pending');
+
+        if ($isBranchManager) {
+            $izinTerbaruQuery->whereHas('user', fn($q) => $q->where('kopdes_id', $managedKopdes->id));
+        }
+
+        $izinTerbaru = $izinTerbaruQuery->latest()->take(5)->get();
 
         // ── User's own attendance today ───────────────────────────
         $myAbsensi = $user->absensiHariIni();
@@ -77,43 +102,59 @@ class DashboardController extends Controller
         $chartKaryawanAktif = collect();
         $chartKehadiranGlobal = collect();
 
-        if ($user->isAdmin() || $user->canApprove()) {
-            $kopdesList = \App\Models\Kopdes::with(['users' => fn($q) => $q->where('status', '!=', 'nonaktif')])->get();
-            
-            $provinsiList = \App\Models\Kopdes::select('provinsi', DB::raw('count(*) as count'))
-                ->groupBy('provinsi')
-                ->get();
+        if ($user->isAdmin() || $user->canApprove() || $isBranchManager) {
+            if ($user->isAdmin()) {
+                $kopdesList = \App\Models\Kopdes::with(['users' => fn($q) => $q->where('status', '!=', 'nonaktif')])->get();
+                
+                $provinsiList = \App\Models\Kopdes::select('provinsi', DB::raw('count(*) as count'))
+                    ->groupBy('provinsi')
+                    ->get();
 
-            $chartKaryawanProvinsi = DB::table('users')
-                ->join('kopdes', 'users.kopdes_id', '=', 'kopdes.id')
-                ->where('users.status', '!=', 'nonaktif')
-                ->select('kopdes.provinsi', DB::raw('count(users.id) as count'))
-                ->groupBy('kopdes.provinsi')
-                ->get();
+                $chartKaryawanProvinsi = DB::table('users')
+                    ->join('kopdes', 'users.kopdes_id', '=', 'kopdes.id')
+                    ->where('users.status', '!=', 'nonaktif')
+                    ->select('kopdes.provinsi', DB::raw('count(users.id) as count'))
+                    ->groupBy('kopdes.provinsi')
+                    ->get();
 
-            $chartKaryawanKopdes = DB::table('users')
-                ->join('kopdes', 'users.kopdes_id', '=', 'kopdes.id')
-                ->where('users.status', '!=', 'nonaktif')
-                ->select('kopdes.nama', DB::raw('count(users.id) as count'))
-                ->groupBy('kopdes.nama')
-                ->get();
+                $chartKaryawanKopdes = DB::table('users')
+                    ->join('kopdes', 'users.kopdes_id', '=', 'kopdes.id')
+                    ->where('users.status', '!=', 'nonaktif')
+                    ->select('kopdes.nama', DB::raw('count(users.id) as count'))
+                    ->groupBy('kopdes.nama')
+                    ->get();
+            }
 
-            // Paling aktif: status_kehadiran = 'hadir' (tepat waktu)
-            $chartKaryawanAktif = DB::table('absensi')
+            // Chart Karyawan Teraktif di Cabang atau Global
+            $chartAktifQuery = DB::table('absensi')
                 ->join('users', 'absensi.user_id', '=', 'users.id')
                 ->whereYear('absensi.tanggal', $year)
                 ->whereMonth('absensi.tanggal', $month)
                 ->where('absensi.status_kehadiran', 'hadir')
-                ->select('users.name', DB::raw('count(absensi.id) as total_tepat_waktu'))
+                ->select('users.name', DB::raw('count(absensi.id) as total_tepat_waktu'));
+
+            if ($isBranchManager) {
+                $chartAktifQuery->where('users.kopdes_id', $managedKopdes->id);
+            }
+
+            $chartKaryawanAktif = $chartAktifQuery
                 ->groupBy('users.id', 'users.name')
                 ->orderBy('total_tepat_waktu', 'desc')
                 ->take(5)
                 ->get();
 
-            $chartKehadiranGlobal = DB::table('absensi')
+            // Chart Kehadiran Global vs Cabang
+            $chartKehadiranQuery = DB::table('absensi')
                 ->whereYear('tanggal', $year)
                 ->whereMonth('tanggal', $month)
-                ->select('status_kehadiran', DB::raw('count(*) as count'))
+                ->select('status_kehadiran', DB::raw('count(*) as count'));
+
+            if ($isBranchManager) {
+                $chartKehadiranQuery->join('users', 'absensi.user_id', '=', 'users.id')
+                    ->where('users.kopdes_id', $managedKopdes->id);
+            }
+
+            $chartKehadiranGlobal = $chartKehadiranQuery
                 ->groupBy('status_kehadiran')
                 ->get();
         }
@@ -122,7 +163,7 @@ class DashboardController extends Controller
             'totalKaryawan', 'hadirHariIni', 'terlambatHariIni', 'sangatTerlambatHariIni',
             'izinPending', 'absensiHariIni', 'heatmapData',
             'izinTerbaru', 'myAbsensi', 'myJadwal', 'today', 'month', 'year',
-            'kopdesList', 'provinsiList',
+            'kopdesList', 'provinsiList', 'isBranchManager', 'managedKopdes',
             'chartKaryawanProvinsi', 'chartKaryawanKopdes', 'chartKaryawanAktif', 'chartKehadiranGlobal'
         ));
     }
