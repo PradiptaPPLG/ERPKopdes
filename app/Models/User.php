@@ -17,6 +17,7 @@ class User extends Authenticatable
         'jabatan', 'status', 'foto_profil',
         'tanda_tangan_digital', 'shift_default_id', 'kopdes_id',
         'two_factor_secret', 'two_factor_confirmed_at',
+        'need_password_change', 'recovery_email',
     ];
 
     protected $hidden = ['password', 'remember_token'];
@@ -28,6 +29,7 @@ class User extends Authenticatable
             'password'                => 'hashed',
             'tanggal_lahir'           => 'date',
             'two_factor_confirmed_at' => 'datetime',
+            'need_password_change'    => 'boolean',
         ];
     }
 
