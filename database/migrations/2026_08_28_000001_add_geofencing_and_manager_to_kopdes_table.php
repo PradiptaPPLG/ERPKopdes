@@ -9,8 +9,6 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('kopdes', function (Blueprint $table) {
-            $table->decimal('latitude', 10, 8)->nullable()->after('alamat');
-            $table->decimal('longitude', 11, 8)->nullable()->after('latitude');
             $table->integer('radius_meter')->default(50)->after('longitude');
             $table->foreignId('manager_id')->nullable()->after('radius_meter')->constrained('users')->nullOnDelete();
         });
@@ -20,7 +18,7 @@ return new class extends Migration
     {
         Schema::table('kopdes', function (Blueprint $table) {
             $table->dropForeign(['manager_id']);
-            $table->dropColumn(['latitude', 'longitude', 'radius_meter', 'manager_id']);
+            $table->dropColumn(['radius_meter', 'manager_id']);
         });
     }
 };
