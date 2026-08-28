@@ -34,16 +34,22 @@
                     </div>
                 </div>
 
-                <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
-                    <div class="form-group">
-                        <label class="form-label">Password Baru (Opsional)</label>
-                        <input type="password" name="password" class="form-control" placeholder="Kosongkan jika tidak ingin mengubah">
-                        @error('password') <div class="form-error">{{ $message }}</div> @enderror
+                <div class="form-group">
+                    <label class="form-label">Email Pemulihan (Recovery Email)</label>
+                    <input type="email" name="recovery_email" value="{{ old('recovery_email', $karyawan->recovery_email) }}" class="form-control" placeholder="email.pemulihan@contoh.com">
+                    <span style="font-size:11px;color:#64748b;display:block;margin-top:4px;">Digunakan sebagai alternatif penerima kode OTP saat Anda lupa password.</span>
+                    @error('recovery_email') <div class="form-error">{{ $message }}</div> @enderror
+                </div>
+
+                {{-- Password change via OTP only --}}
+                <div style="background:linear-gradient(135deg,#f8fafc,#f1f5f9);border:1px solid #e2e8f0;border-radius:10px;padding:16px 20px;margin-bottom:16px;display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;">
+                    <div>
+                        <div style="font-size:13px;font-weight:700;color:#1e293b;margin-bottom:3px;">🔒 Keamanan Akun</div>
+                        <div style="font-size:12px;color:#64748b;line-height:1.5;">Untuk mengubah password, verifikasi OTP diperlukan terlebih dahulu demi keamanan akun Anda.</div>
                     </div>
-                    <div class="form-group">
-                        <label class="form-label">Konfirmasi Password Baru</label>
-                        <input type="password" name="password_confirmation" class="form-control" placeholder="Ulangi password baru">
-                    </div>
+                    <a href="{{ route('profile.change-password') }}" class="btn btn-secondary" style="white-space:nowrap;font-weight:700;font-size:12px;padding:8px 16px;border-radius:8px;background:#cc0000;color:#fff;border:none;">
+                        Ubah Password →
+                    </a>
                 </div>
 
                 <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;background:#f8fafc;padding:16px;border-radius:8px;border:1px solid #e2e8f0;margin-bottom:20px;">
