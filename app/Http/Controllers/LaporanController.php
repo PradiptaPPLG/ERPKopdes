@@ -70,4 +70,60 @@ class LaporanController extends Controller
             'tanggalAwal', 'tanggalAkhir', 'userId'
         ));
     }
+
+    /**
+     * Show activity logs dashboard for admins.
+     */
+    public function activityLogs(Request $request)
+    {
+        $query = \App\Models\LogAktivitas::with('user');
+
+        if ($request->filled('user_id')) {
+            $query->where('user_id', $request->user_id);
+        }
+
+        if ($request->filled('aksi')) {
+            $query->where('aksi', $request->aksi);
+        }
+
+        $logs = $query->orderBy('created_at', 'desc')->paginate(30);
+        $karyawan = User::orderBy('name')->get();
+
+        return view('laporan.activity_logs', compact('logs', 'karyawan'));
+    }
+
+    /**
+     * Export activity logs to print layout with digital verification.
+     */
+    public function exportActivityLogs(Request $request)
+    {
+        $query = \App\Models\LogAktivitas::with('user');
+
+        if ($request->filled('user_id')) {
+            $query->where('user_id', $request->user_id);
+        }
+
+        if ($request->filled('aksi')) {
+            $query->where('aksi', $request->aksi);
+        }
+
+        $logs = $query->orderBy('created_at', 'desc')->get();
+        
+        $verifiedCount = 0;
+        $manipulatedCount = 0;
+
+        foreach ($logs as $log) {
+            if ($log->isValidHash()) {
+                $verifiedCount++;
+            } else {
+                $manipulatedCount++;
+            }
+        }
+
+        $appKey = config('app.key');
+        $exportTime = now();
+
+        return view('laporan.activity_logs_print', compact('logs', 'verifiedCount', 'manipulatedCount', 'exportTime', 'appKey'));
+    }
 }
+

@@ -105,9 +105,16 @@
                         </div>
                     </div>
 
-                    <div style="flex-shrink:0;">
+                    <div style="flex-shrink:0; display:flex; gap:10px; flex-wrap:wrap;">
+                        <a href="{{ route('profile.sessions') }}" class="btn btn-secondary" style="border-radius:8px;font-size:12px;padding:10px 16px;font-weight:600;display:inline-flex;align-items:center;gap:6px;text-decoration:none;transition:all 0.2s;background:#f1f5f9;color:#334155;border:1px solid #cbd5e1;">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                            </svg>
+                            Kelola Sesi Perangkat
+                        </a>
+
                         @if($karyawan->hasTwoFactorEnabled())
-                            <form method="POST" action="{{ route('profile.2fa.disable') }}" onsubmit="return confirm('Apakah Anda yakin ingin menonaktifkan keamanan 2FA? Keamanan akun Anda akan berkurang.');">
+                            <form method="POST" action="{{ route('profile.2fa.disable') }}" onsubmit="return confirm('Apakah Anda yakin ingin menonaktifkan keamanan 2FA? Keamanan akun Anda akan berkurang.');" style="margin:0;">
                                 @csrf
                                 <button type="submit" class="btn" style="border-radius:8px;font-size:12px;background:#ef4444;color:#fff;border:none;padding:10px 16px;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;gap:6px;transition:all 0.2s;">
                                     <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">

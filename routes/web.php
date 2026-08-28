@@ -101,8 +101,19 @@ Route::middleware('auth')->group(function () {
     Route::get('/profile/edit', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::put('/profile/update', [ProfileController::class, 'update'])->name('profile.update');
 
+    // ── Profile Device Sessions Manager ─────────────────────────
+    Route::get('/profile/sessions', [ProfileController::class, 'sessions'])->name('profile.sessions');
+    Route::delete('/profile/sessions/{id}', [ProfileController::class, 'destroySession'])->name('profile.sessions.destroy');
+
     // ── Profile 2FA Setup ───────────────────────────────────────
     Route::get('/profile/2fa/setup', [\App\Http\Controllers\Auth\TwoFactorController::class, 'setup'])->name('profile.2fa.setup');
     Route::post('/profile/2fa/confirm', [\App\Http\Controllers\Auth\TwoFactorController::class, 'confirm'])->name('profile.2fa.confirm');
     Route::post('/profile/2fa/disable', [\App\Http\Controllers\Auth\TwoFactorController::class, 'disable'])->name('profile.2fa.disable');
+
+    // ── Admin-Only Activity Logs Dashboard & Exporter ───────────
+    Route::middleware('role:admin,ketua,sekretaris')->group(function () {
+        Route::get('/admin/logs', [LaporanController::class, 'activityLogs'])->name('admin.logs');
+        Route::get('/admin/logs/export', [LaporanController::class, 'exportActivityLogs'])->name('admin.logs.export');
+    });
 });
+

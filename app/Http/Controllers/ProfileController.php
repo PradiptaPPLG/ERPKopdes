@@ -84,4 +84,72 @@ class ProfileController extends Controller
         return redirect()->route('profile.show')
             ->with('success', 'Profil Anda berhasil diperbarui.');
     }
+
+    /**
+     * Show the device sessions list.
+     */
+    public function sessions()
+    {
+        $sessions = \Illuminate\Support\Facades\DB::table('sessions')
+            ->where('user_id', auth()->id())
+            ->orderBy('last_activity', 'desc')
+            ->get()
+            ->map(function ($session) {
+                // Parsing user agent sederhana
+                $userAgent = $session->user_agent;
+                $browser = 'Browser Tidak Diketahui';
+                $platform = 'Device Tidak Diketahui';
+
+                if (preg_match('/windows|win32/i', $userAgent)) {
+                    $platform = 'Windows';
+                } elseif (preg_match('/macintosh|mac os x/i', $userAgent)) {
+                    $platform = 'Mac';
+                } elseif (preg_match('/linux/i', $userAgent)) {
+                    $platform = 'Linux';
+                } elseif (preg_match('/android/i', $userAgent)) {
+                    $platform = 'Android';
+                } elseif (preg_match('/iphone/i', $userAgent)) {
+                    $platform = 'iPhone';
+                }
+
+                if (preg_match('/chrome/i', $userAgent)) {
+                    $browser = 'Chrome';
+                } elseif (preg_match('/firefox/i', $userAgent)) {
+                    $browser = 'Firefox';
+                } elseif (preg_match('/safari/i', $userAgent)) {
+                    $browser = 'Safari';
+                } elseif (preg_match('/edge/i', $userAgent)) {
+                    $browser = 'Edge';
+                } elseif (preg_match('/opera/i', $userAgent)) {
+                    $browser = 'Opera';
+                }
+
+                return (object) [
+                    'id' => $session->id,
+                    'ip_address' => $session->ip_address,
+                    'is_current_device' => $session->id === request()->session()->getId(),
+                    'browser' => $browser,
+                    'platform' => $platform,
+                    'last_active' => \Carbon\Carbon::createFromTimestamp($session->last_activity),
+                ];
+            });
+
+        return view('profile.sessions', compact('sessions'));
+    }
+
+    /**
+     * Terminate the given session.
+     */
+    public function destroySession(Request $request, $id)
+    {
+        \Illuminate\Support\Facades\DB::table('sessions')
+            ->where('user_id', auth()->id())
+            ->where('id', $id)
+            ->delete();
+
+        LogAktivitas::catat('force_logout_device', 'Menghentikan sesi perangkat lain (' . $id . ')');
+
+        return back()->with('success', 'Perangkat berhasil dikeluarkan.');
+    }
 }
+

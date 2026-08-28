@@ -22,13 +22,19 @@ class SingleSession
             $currentSessionId = $request->session()->getId();
             $activeSessionId = Cache::get('user_session_' . $user->id);
 
-            // Jika sesi aktif di cache berbeda dengan sesi saat ini, logout
-            if ($activeSessionId && $activeSessionId !== $currentSessionId) {
+            // Jika sesi aktif di cache berbeda dengan sesi saat ini, ATAU sesi saat ini sudah dihapus dari tabel sessions di DB
+            $sessionExists = \Illuminate\Support\Facades\DB::table('sessions')->where('id', $currentSessionId)->exists();
+
+            if (($activeSessionId && $activeSessionId !== $currentSessionId) || !$sessionExists) {
                 Auth::logout();
                 $request->session()->invalidate();
                 $request->session()->regenerateToken();
 
-                return redirect()->route('login')->with('warning', 'Sesi Anda telah berakhir karena akun ini telah login di perangkat atau browser lain.');
+                $message = !$sessionExists 
+                    ? 'Sesi Anda telah diakhiri secara paksa dari panel manajemen perangkat.' 
+                    : 'Sesi Anda telah berakhir karena akun ini telah login di perangkat atau browser lain.';
+
+                return redirect()->route('login')->with('warning', $message);
             }
         }
 
