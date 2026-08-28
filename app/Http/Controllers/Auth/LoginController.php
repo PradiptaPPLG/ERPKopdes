@@ -51,8 +51,9 @@ class LoginController extends Controller
 
         if (RateLimiter::tooManyAttempts($throttleKey, 5)) {
             $seconds = RateLimiter::availableIn($throttleKey);
+            $minutes = ceil($seconds / 60);
             throw ValidationException::withMessages([
-                'email' => "Terlalu banyak percobaan login. Silakan coba lagi dalam {$seconds} detik.",
+                'email' => "Terlalu banyak percobaan login. Silakan coba lagi dalam {$minutes} menit.",
             ]);
         }
 
@@ -81,7 +82,7 @@ class LoginController extends Controller
         if ($has2fa) {
             // Validasi kredensial secara manual menggunakan Auth::validate()
             if (!Auth::validate($credentials)) {
-                RateLimiter::hit($throttleKey, 60);
+                $this->hitWithProgressiveDelay($throttleKey);
                 throw ValidationException::withMessages([
                     'email' => 'Email atau password salah.',
                 ]);
@@ -96,6 +97,7 @@ class LoginController extends Controller
             }
 
             RateLimiter::clear($throttleKey);
+            Cache::forget('rl_step:' . $throttleKey);
 
             // Simpan ID user ke session sementara untuk 2FA Challenge
             session([
@@ -109,7 +111,7 @@ class LoginController extends Controller
 
         // Alur login normal jika tidak ada 2FA
         if (!Auth::attempt($credentials, $remember)) {
-            RateLimiter::hit($throttleKey, 60);
+            $this->hitWithProgressiveDelay($throttleKey);
             throw ValidationException::withMessages([
                 'email' => 'Email atau password salah.',
             ]);
@@ -125,6 +127,7 @@ class LoginController extends Controller
         }
 
         RateLimiter::clear($throttleKey);
+        Cache::forget('rl_step:' . $throttleKey);
 
         $request->session()->regenerate();
 
@@ -134,6 +137,23 @@ class LoginController extends Controller
         LogAktivitas::catat('login', "User {$user->name} ({$user->jabatan}) login ke sistem.");
 
         return redirect()->intended(route('dashboard'));
+    }
+
+    private function hitWithProgressiveDelay(string $key)
+    {
+        $stepKey = 'rl_step:' . $key;
+        $currentStep = (int) Cache::get($stepKey, 0);
+
+        // Urutan delay: 1, 3, 5, 8, 12, 24, 30 menit
+        $delays = [1, 3, 5, 8, 12, 24, 30];
+        
+        $delayMinutes = isset($delays[$currentStep]) ? $delays[$currentStep] : 30;
+        $decaySeconds = $delayMinutes * 60;
+
+        RateLimiter::hit($key, $decaySeconds);
+
+        // Update step untuk kesalahan berikutnya
+        Cache::put($stepKey, $currentStep + 1, now()->addDay());
     }
 
     public function logout(Request $request)

@@ -224,6 +224,40 @@
     </header>
 
     <div style="padding: 0 28px;">
+        {{-- Banner Peringatan 2FA --}}
+        @if(!auth()->user()->hasTwoFactorEnabled())
+        <div id="banner-2fa" style="display: flex; align-items: center; justify-content: space-between; background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%); border: 1px solid #fde68a; border-radius: 8px; padding: 12px 18px; margin-top: 16px; box-shadow: 0 2px 4px rgba(0,0,0,0.02); transition: all 0.2s ease;">
+            <div style="display: flex; align-items: center; gap: 12px;">
+                <div style="background: #f59e0b; color: #fff; width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 15v2m0-6h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                </div>
+                <div>
+                    <strong style="color: #78350f; font-size: 13px; display: block;">Keamanan Akun Anda Belum Optimal!</strong>
+                    <span style="color: #92400e; font-size: 11px;">Anda belum mengaktifkan Otentikasi Dua Faktor (2FA). Aktifkan sekarang untuk melindungi akun Anda dari spamming dan akses tidak sah.</span>
+                </div>
+            </div>
+            <div style="display: flex; align-items: center; gap: 12px;">
+                <a href="{{ route('profile.2fa.setup') }}" style="background: #d97706; color: #fff; font-size: 11px; font-weight: 700; text-decoration: none; padding: 6px 14px; border-radius: 6px; box-shadow: 0 1px 2px rgba(0,0,0,0.05); transition: background 0.15s;">
+                    Aktifkan 2FA
+                </a>
+                <button type="button" onclick="dismiss2faBanner()" style="background: none; border: none; color: #b45309; cursor: pointer; padding: 4px; font-size: 16px; font-weight: bold; line-height: 1; display: flex; align-items: center; justify-content: center;">
+                    &times;
+                </button>
+            </div>
+        </div>
+        <script>
+            if (sessionStorage.getItem('dismiss_2fa_banner') === 'true') {
+                document.getElementById('banner-2fa').style.display = 'none';
+            }
+            function dismiss2faBanner() {
+                document.getElementById('banner-2fa').style.display = 'none';
+                sessionStorage.setItem('dismiss_2fa_banner', 'true');
+            }
+        </script>
+        @endif
+
         @if(session('success'))
         <div class="alert alert-success" style="margin-top:16px;">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="flex-shrink:0;margin-top:1px;">
