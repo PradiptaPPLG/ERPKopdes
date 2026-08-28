@@ -28,6 +28,8 @@ class UserSeeder extends Seeder
                 'name'            => 'Administrator Kopdes',
                 'email'           => 'admin@kopdes.id',
                 'password'        => Hash::make('admin123'),
+                'need_password_change' => false,
+                'recovery_email'  => 'pradipta02032009@gmail.com',
                 'nik'             => '3271010101800001',
                 'nip'             => 'KD-2020-0001',
                 'tempat_lahir'    => 'Jakarta',
@@ -46,6 +48,8 @@ class UserSeeder extends Seeder
                 'name'            => 'Budi Santoso',
                 'email'           => 'ketua@kopdes.id',
                 'password'        => Hash::make('ketua123'),
+                'need_password_change' => false,
+                'recovery_email'  => 'pradipta02032009@gmail.com',
                 'nik'             => '3271010201750002',
                 'nip'             => 'KD-2018-0002',
                 'tempat_lahir'    => 'Ciamis',
@@ -64,6 +68,8 @@ class UserSeeder extends Seeder
                 'name'            => 'Siti Rahayu',
                 'email'           => 'sekretaris@kopdes.id',
                 'password'        => Hash::make('sekretaris123'),
+                'need_password_change' => false,
+                'recovery_email'  => 'pradipta02032009@gmail.com',
                 'nik'             => '3271014503820003',
                 'nip'             => 'KD-2019-0003',
                 'tempat_lahir'    => 'Bandung',
@@ -82,6 +88,8 @@ class UserSeeder extends Seeder
                 'name'            => 'Ahmad Fauzi',
                 'email'           => 'bendahara@kopdes.id',
                 'password'        => Hash::make('bendahara123'),
+                'need_password_change' => false,
+                'recovery_email'  => 'pradipta02032009@gmail.com',
                 'nik'             => '3271010104850004',
                 'nip'             => 'KD-2019-0004',
                 'tempat_lahir'    => 'Yogyakarta',
@@ -100,6 +108,8 @@ class UserSeeder extends Seeder
                 'name'            => 'Dewi Permata',
                 'email'           => 'kasir1@kopdes.id',
                 'password'        => Hash::make('kasir123'),
+                'need_password_change' => false,
+                'recovery_email'  => 'pradipta02032009@gmail.com',
                 'nik'             => '3271014504900005',
                 'nip'             => 'KD-2021-0005',
                 'tempat_lahir'    => 'Denpasar',
@@ -118,6 +128,8 @@ class UserSeeder extends Seeder
                 'name'            => 'Rizky Pratama',
                 'email'           => 'kasir2@kopdes.id',
                 'password'        => Hash::make('kasir123'),
+                'need_password_change' => false,
+                'recovery_email'  => 'pradipta02032009@gmail.com',
                 'nik'             => '3271010106920006',
                 'nip'             => 'KD-2022-0006',
                 'tempat_lahir'    => 'Badung',
@@ -136,6 +148,8 @@ class UserSeeder extends Seeder
                 'name'            => 'Rina Wulandari',
                 'email'           => 'petugas1@kopdes.id',
                 'password'        => Hash::make('petugas123'),
+                'need_password_change' => false,
+                'recovery_email'  => 'pradipta02032009@gmail.com',
                 'nik'             => '3271014507950007',
                 'nip'             => 'KD-2022-0007',
                 'tempat_lahir'    => 'Surabaya',
@@ -154,6 +168,8 @@ class UserSeeder extends Seeder
                 'name'            => 'Hendra Gunawan',
                 'email'           => 'petugas2@kopdes.id',
                 'password'        => Hash::make('petugas123'),
+                'need_password_change' => false,
+                'recovery_email'  => 'pradipta02032009@gmail.com',
                 'nik'             => '3271010108930008',
                 'nip'             => 'KD-2023-0008',
                 'tempat_lahir'    => 'Semarang',
@@ -172,6 +188,8 @@ class UserSeeder extends Seeder
                 'name'            => 'Maya Lestari',
                 'email'           => 'maya@kopdes.id',
                 'password'        => Hash::make('maya123'),
+                'need_password_change' => false,
+                'recovery_email'  => 'pradipta02032009@gmail.com',
                 'nik'             => '3271014509880009',
                 'nip'             => 'KD-2021-0009',
                 'tempat_lahir'    => 'Medan',
@@ -190,6 +208,8 @@ class UserSeeder extends Seeder
                 'name'            => 'Pradipta Endra Maulana',
                 'email'           => 'pradipta02032009@gmail.com',
                 'password'        => Hash::make('02032009'),
+                'need_password_change' => false,
+                'recovery_email'  => 'pradipta02032009@gmail.com',
                 'nik'             => '3276389173647382',
                 'nip'             => 'KD-2009-0010',
                 'tempat_lahir'    => 'Ciamis',
@@ -208,6 +228,8 @@ class UserSeeder extends Seeder
                 'name'            => 'Fathin',
                 'email'           => 'fathin@gmail.com',
                 'password'        => Hash::make('fathin123'),
+                'need_password_change' => false,
+                'recovery_email'  => 'pradipta02032009@gmail.com',
                 'nik'             => '3276378473891237',
                 'nip'             => 'KD-2009-0011',
                 'tempat_lahir'    => 'Ciamis',
@@ -222,6 +244,12 @@ class UserSeeder extends Seeder
                 'kopdes_id'       => $kopdesCijeungjing,
             ],
         ];
+
+        foreach ($users as $user) {
+            User::create($user);
+        }
+    }
+}
 
         foreach ($users as $user) {
             User::create($user);
