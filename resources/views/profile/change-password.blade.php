@@ -6,11 +6,6 @@
 @section('content')
 <div style="max-width:600px;margin:0 auto;display:flex;flex-direction:column;gap:20px;">
 
-    @if(session('success'))
-    <div style="padding:12px 16px;background:#f0fdf4;border-left:4px solid #22c55e;border-radius:8px;font-size:13px;color:#166534;font-weight:600;">
-        ✓ {{ session('success') }}
-    </div>
-    @endif
     @if(session('error'))
     <div style="padding:12px 16px;background:#fef2f2;border-left:4px solid #dc2626;border-radius:8px;font-size:13px;color:#991b1b;font-weight:600;">
         {{ session('error') }}

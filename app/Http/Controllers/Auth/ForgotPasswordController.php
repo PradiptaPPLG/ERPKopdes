@@ -244,7 +244,7 @@ class ForgotPasswordController extends Controller
 
         session(['profile_otp_sent' => true, 'profile_otp_dest' => $this->maskEmail($destination)]);
 
-        return redirect()->route('profile.change-password')->with('success', 'Kode OTP berhasil dikirim ke ' . $this->maskEmail($destination));
+        return redirect()->route('profile.change-password');
     }
 
     // ── Profile: show change password form (after OTP sent) ──────

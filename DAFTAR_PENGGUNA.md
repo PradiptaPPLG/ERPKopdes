@@ -9,7 +9,7 @@ Berikut adalah daftar lengkap akun pengguna yang dapat digunakan untuk masuk (lo
 
 | Username / Email | Password | Role / Jabatan | Nama Lengkap |
 | :--- | :--- | :--- | :--- |
-| `admin@kopdes.id` | **`admin123`** | **Admin** (Administrator) | Administrator Kopdes |
+| `admin@kopdes.id` | **`#AdminKopdes2026`** | **Admin** (Administrator) | Administrator Kopdes |
 | `ketua@kopdes.id` | **`ketua123`** | **Ketua** (Ketua Koperasi) | Budi Santoso |
 | `sekretaris@kopdes.id` | **`sekretaris123`** | **Sekretaris** | Siti Rahayu |
 | `bendahara@kopdes.id` | **`bendahara123`** | **Bendahara** | Ahmad Fauzi |
