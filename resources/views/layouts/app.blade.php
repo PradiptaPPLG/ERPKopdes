@@ -129,29 +129,8 @@
         </a>
     </nav>
 
-    <div class="sidebar-footer">
-        <a href="{{ route('profile.show') }}" style="display:flex;align-items:center;gap:10px;text-decoration:none;color:inherit;margin-bottom:10px;">
-            <div class="avatar" style="background:#fff3f3;color:#cc0000;font-size:11px;width:32px;height:32px;">
-                {{ strtoupper(substr(auth()->user()->name, 0, 1)) }}
-            </div>
-            <div style="flex:1;min-width:0;">
-                <div style="color:#fff;font-size:12px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
-                    {{ Str::limit(auth()->user()->name, 18) }}
-                </div>
-                <div style="color:rgba(255,255,255,0.6);font-size:10px;">
-                    {{ auth()->user()->jabatanLabel() }}
-                </div>
-            </div>
-        </a>
-        <form method="POST" action="{{ route('logout') }}">
-            @csrf
-            <button type="submit" class="btn btn-sm" style="width:100%;background:rgba(255,255,255,0.12);color:#fff;border:1px solid rgba(255,255,255,0.2);justify-content:center;">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-                </svg>
-                <span>Logout</span>
-            </button>
-        </form>
+    <div class="sidebar-footer" style="padding:15px; border-top:1px solid rgba(255,255,255,0.08); text-align:center; font-size:11px; color:rgba(255,255,255,0.4);">
+        &copy; {{ date('Y') }} ERP Kopdes
     </div>
 </aside>
 
@@ -212,20 +191,55 @@
                 </div>
             </div>
 
-            {{-- Profile Link --}}
-            <a href="{{ route('profile.show') }}" style="display:flex;align-items:center;gap:10px;text-decoration:none;color:inherit;">
-                <div style="text-align:right;">
-                    <div style="font-size:13px;font-weight:600;color:#1a1a1a;">{{ auth()->user()->name }}</div>
-                    <div style="font-size:11px;color:#888;">{{ auth()->user()->jabatanLabel() }}</div>
+            {{-- Profile Dropdown --}}
+            <div class="dropdown">
+                <button type="button" class="dropdown-toggle" style="display:flex;align-items:center;gap:10px;background:none;border:none;cursor:pointer;padding:4px 8px;border-radius:8px;transition:background 0.15s;text-align:left;">
+                    <div style="text-align:right;">
+                        <div style="font-size:13px;font-weight:600;color:#1a1a1a;">{{ auth()->user()->name }}</div>
+                        <div style="font-size:11px;color:#888;">{{ auth()->user()->jabatanLabel() }}</div>
+                    </div>
+                    @if(auth()->user()->foto_profil)
+                    <img src="{{ Storage::url(auth()->user()->foto_profil) }}" alt="" class="avatar" style="border: 2px solid #fff; box-shadow: 0 2px 8px rgba(0,0,0,0.08);">
+                    @else
+                    <div class="avatar" style="background:#fff0f0;color:#cc0000;border: 2px solid #fff; box-shadow: 0 2px 8px rgba(0,0,0,0.08);">
+                        {{ strtoupper(substr(auth()->user()->name, 0, 1)) }}
+                    </div>
+                    @endif
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5" style="color:#666;margin-left:2px;">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
+                    </svg>
+                </button>
+                <div class="dropdown-menu" style="min-width:180px;right:0;padding:6px 0;border-radius:8px;border:1px solid #eef2f6;box-shadow:0 10px 25px rgba(0,0,0,0.08);background:#fff;margin-top:4px;">
+                    <a href="{{ route('profile.show') }}" class="dropdown-item" style="padding:10px 16px;font-size:13px;color:#333;display:flex;align-items:center;gap:8px;text-decoration:none;">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" style="color:#666;">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                        </svg>
+                        <span>Profil Saya</span>
+                    </a>
+                    <a href="{{ route('profile.edit') }}" class="dropdown-item" style="padding:10px 16px;font-size:13px;color:#333;display:flex;align-items:center;gap:8px;text-decoration:none;">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" style="color:#666;">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                        </svg>
+                        <span>Edit Profil</span>
+                    </a>
+                    <a href="{{ route('profile.change-password') }}" class="dropdown-item" style="padding:10px 16px;font-size:13px;color:#333;display:flex;align-items:center;gap:8px;text-decoration:none;">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" style="color:#666;">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                        </svg>
+                        <span>Ubah Password</span>
+                    </a>
+                    <hr style="border:none;border-top:1px solid #f0f3f6;margin:6px 0;">
+                    <form method="POST" action="{{ route('logout') }}" style="margin:0;">
+                        @csrf
+                        <button type="submit" class="dropdown-item" style="width:100%;padding:10px 16px;font-size:13px;color:#dc2626;border:none;background:none;cursor:pointer;display:flex;align-items:center;gap:8px;text-align:left;font-family:inherit;font-weight:600;">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                            </svg>
+                            <span>Keluar (Logout)</span>
+                        </button>
+                    </form>
                 </div>
-                @if(auth()->user()->foto_profil)
-                <img src="{{ Storage::url(auth()->user()->foto_profil) }}" alt="" class="avatar" style="border: 2px solid #fff; box-shadow: 0 2px 8px rgba(0,0,0,0.08);">
-                @else
-                <div class="avatar" style="background:#fff0f0;color:#cc0000;border: 2px solid #fff; box-shadow: 0 2px 8px rgba(0,0,0,0.08);">
-                    {{ strtoupper(substr(auth()->user()->name, 0, 1)) }}
-                </div>
-                @endif
-            </a>
+            </div>
         </div>
     </header>
 
