@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\AbsensiController;
+use App\Http\Controllers\Auth\ForgotPasswordController;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\IzinCutiController;
@@ -24,6 +25,15 @@ Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
 Route::post('/login/check-2fa', [\App\Http\Controllers\Auth\TwoFactorController::class, 'check2fa'])->name('login.check-2fa');
 Route::get('/login/2fa', [\App\Http\Controllers\Auth\TwoFactorController::class, 'showChallenge'])->name('login.2fa');
 Route::post('/login/2fa', [\App\Http\Controllers\Auth\TwoFactorController::class, 'verifyChallenge'])->name('login.2fa.post');
+
+// ── Forgot Password (OTP flow) — Publik ──────────────────────────
+Route::get('/password/forgot',          [ForgotPasswordController::class, 'showEmailForm'])->name('password.forgot');
+Route::post('/password/forgot',         [ForgotPasswordController::class, 'submitEmail'])->name('password.forgot.submit');
+Route::post('/password/otp/send',       [ForgotPasswordController::class, 'sendOtp'])->name('password.otp.send');
+Route::get('/password/otp/verify',      [ForgotPasswordController::class, 'showOtpForm'])->name('password.otp.verify');
+Route::post('/password/otp/verify',     [ForgotPasswordController::class, 'verifyOtp'])->name('password.otp.check');
+Route::get('/password/reset',           [ForgotPasswordController::class, 'showResetForm'])->name('password.reset.form');
+Route::post('/password/reset',          [ForgotPasswordController::class, 'resetPassword'])->name('password.reset.submit');
 
 // ── Authenticated routes ───────────────────────────────────────
 Route::middleware('auth')->group(function () {
@@ -96,10 +106,19 @@ Route::middleware('auth')->group(function () {
     Route::get('/notifications/{notification}/read', [NotificationController::class, 'read'])->name('notifications.read');
     Route::post('/notifications/read-all', [NotificationController::class, 'readAll'])->name('notifications.read-all');
 
+    // ── Forced first-login password change (middleware exempt) ───
+    Route::get('/password/force-change',    [ForgotPasswordController::class, 'showForceChangeForm'])->name('password.force.change');
+    Route::post('/password/force-change',   [ForgotPasswordController::class, 'forceChangePassword'])->name('password.force.update');
+
     // ── Profile ────────────────────────────────────────────────
     Route::get('/profile', [ProfileController::class, 'show'])->name('profile.show');
     Route::get('/profile/edit', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::put('/profile/update', [ProfileController::class, 'update'])->name('profile.update');
+
+    // ── Profile: Ubah Password via OTP ──────────────────────────
+    Route::get('/profile/change-password',       [ForgotPasswordController::class, 'showProfileChangeForm'])->name('profile.change-password');
+    Route::post('/profile/change-password/otp',  [ForgotPasswordController::class, 'profileSendOtp'])->name('profile.password.otp.send');
+    Route::post('/profile/change-password',      [ForgotPasswordController::class, 'profileUpdatePassword'])->name('profile.password.update');
 
     // ── Profile Device Sessions Manager ─────────────────────────
     Route::get('/profile/sessions', [ProfileController::class, 'sessions'])->name('profile.sessions');

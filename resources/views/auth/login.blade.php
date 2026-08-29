@@ -140,8 +140,7 @@
                 <label style="display:flex;align-items:center;gap:6px;cursor:pointer;color:#555;user-select:none;">
                     <input type="checkbox" name="remember" style="width:14px;height:14px;accent-color:#cc0000;"> Ingat saya
                 </label>
-                <a href="#" style="color:#cc0000;text-decoration:none;font-weight:600;"
-                   onclick="alert('Hubungi Administrator:\n📞 081234567890\n📧 admin@kopdes.id'); return false;">
+                <a href="{{ route('password.forgot') }}" style="color:#cc0000;text-decoration:none;font-weight:600;">
                     Lupa password?
                 </a>
             </div>
