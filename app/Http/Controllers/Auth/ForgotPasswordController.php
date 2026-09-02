@@ -60,8 +60,9 @@ class ForgotPasswordController extends Controller
         }
 
         $user = User::findOrFail($userId);
+        $selectedMethod = $request->input('method'); // ← Gunakan input() agar tidak konflik dengan HTTP verb property
 
-        if ($request->method === 'recovery') {
+        if ($selectedMethod === 'recovery') {
             if (!$user->recovery_email) {
                 return back()->with('error', 'Akun ini tidak memiliki email pemulihan yang terdaftar.');
             }
@@ -76,7 +77,7 @@ class ForgotPasswordController extends Controller
         // Store in cache for 10 minutes
         Cache::put("otp_reset_{$userId}", [
             'code'      => $otp,
-            'method'    => $request->method,
+            'method'    => $selectedMethod,
             'purpose'   => 'forgot_password',
         ], now()->addMinutes(10));
 
@@ -87,7 +88,7 @@ class ForgotPasswordController extends Controller
             return back()->with('error', 'Gagal mengirim email OTP. Periksa konfigurasi email server. Error: ' . $e->getMessage());
         }
 
-        session(['otp_method' => $request->method, 'otp_dest_masked' => $this->maskEmail($destination)]);
+        session(['otp_method' => $selectedMethod, 'otp_dest_masked' => $this->maskEmail($destination)]);
 
         return redirect()->route('password.otp.verify');
     }
@@ -227,8 +228,9 @@ class ForgotPasswordController extends Controller
         ]);
 
         $user = auth()->user();
+        $selectedMethod = $request->input('method'); // ← Gunakan input() agar tidak konflik dengan HTTP verb property
 
-        if ($request->method === 'recovery') {
+        if ($selectedMethod === 'recovery') {
             if (!$user->recovery_email) {
                 return back()->with('error', 'Anda belum memiliki email pemulihan. Tambahkan dulu di pengaturan profil.');
             }
