@@ -66,7 +66,7 @@
                 <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
                     <div class="form-group">
                         <label class="form-label">Shift Default</label>
-                        <select name="shift_default_id" class="form-control">
+                        <select name="shift_default_id" id="shiftSelect" class="form-control">
                             <option value="">Pilih Shift Default</option>
                             @foreach($shifts as $shift)
                             <option value="{{ $shift->id }}" {{ old('shift_default_id', $karyawan->shift_default_id) == $shift->id ? 'selected' : '' }}>
@@ -74,10 +74,16 @@
                             </option>
                             @endforeach
                         </select>
+                        <div id="shiftHelpText" style="font-size:11px;color:#0284c7;margin-top:4px;display:none;font-weight:600;">
+                            ℹ️ Jabatan Admin &amp; Ketua tidak menggunakan Shift Kerja.
+                        </div>
                     </div>
                     <div class="form-group">
                         <label class="form-label">Kopdes Penugasan <span class="required">*</span></label>
-                        <select name="kopdes_id" class="form-control" required>
+                        <div style="margin-bottom:6px;">
+                            <input type="text" id="kopdesSearchInput" class="form-control" style="font-size:12px;padding:6px 10px;background:#f8fafc;" placeholder="🔍 Cari nama Kopdes / desa...">
+                        </div>
+                        <select name="kopdes_id" id="kopdesSelect" class="form-control" required>
                             <option value="" disabled selected>Pilih Koperasi Desa</option>
                             @foreach($kopdes as $kop)
                             <option value="{{ $kop->id }}" {{ old('kopdes_id', $karyawan->kopdes_id) == $kop->id ? 'selected' : '' }}>
@@ -157,4 +163,43 @@
         </div>
     </div>
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const jabatanSelect = document.querySelector('select[name="jabatan"]');
+    const shiftSelect = document.getElementById('shiftSelect');
+    const shiftHelpText = document.getElementById('shiftHelpText');
+    const kopdesSearchInput = document.getElementById('kopdesSearchInput');
+    const kopdesSelect = document.getElementById('kopdesSelect');
+
+    function checkShiftLock() {
+        if (!jabatanSelect || !shiftSelect) return;
+        const val = jabatanSelect.value;
+        if (val === 'admin' || val === 'ketua') {
+            shiftSelect.value = '';
+            shiftSelect.disabled = true;
+            if (shiftHelpText) shiftHelpText.style.display = 'block';
+        } else {
+            shiftSelect.disabled = false;
+            if (shiftHelpText) shiftHelpText.style.display = 'none';
+        }
+    }
+
+    if (jabatanSelect) {
+        jabatanSelect.addEventListener('change', checkShiftLock);
+        checkShiftLock();
+    }
+
+    if (kopdesSearchInput && kopdesSelect) {
+        kopdesSearchInput.addEventListener('input', function() {
+            const filter = this.value.toLowerCase();
+            Array.from(kopdesSelect.options).forEach(option => {
+                if (!option.value) return;
+                const text = option.text.toLowerCase();
+                option.style.display = text.includes(filter) ? '' : 'none';
+            });
+        });
+    }
+});
+</script>
 @endsection

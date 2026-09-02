@@ -162,14 +162,16 @@
                         @foreach($tiers as $level => $tier)
                             @php
                                 $isUnlocked = in_array($level, $unlocked);
+                                $isSelected = $currentTheme == $level && $isUnlocked;
                             @endphp
-                            <label style="display:block;cursor:{{ $isUnlocked ? 'pointer' : 'not-allowed' }};position:relative;">
+                            <label class="theme-card-option" style="display:block;cursor:{{ $isUnlocked ? 'pointer' : 'not-allowed' }};position:relative;">
                                 <input type="radio" name="id_card_theme" value="{{ $level }}" 
+                                       class="theme-radio-input"
                                        style="display:none;" 
                                        {{ !$isUnlocked ? 'disabled' : '' }}
-                                       {{ $currentTheme == $level && $isUnlocked ? 'checked' : '' }}>
+                                       {{ $isSelected ? 'checked' : '' }}>
                                 
-                                <div style="border: 2px solid {{ $currentTheme == $level && $isUnlocked ? '#3b82f6' : '#e2e8f0' }};
+                                <div class="theme-card-box" style="border: 2px solid {{ $isSelected ? '#3b82f6' : '#e2e8f0' }};
                                             border-radius: 8px; overflow:hidden; opacity:{{ $isUnlocked ? '1' : '0.5' }};
                                             transition: all 0.2s;">
                                     {{-- Preview Banner --}}
@@ -187,11 +189,9 @@
                                     </div>
                                 </div>
                                 {{-- Checked Indicator --}}
-                                @if($currentTheme == $level && $isUnlocked)
-                                    <div style="position:absolute;top:-6px;right:-6px;background:#3b82f6;color:#fff;border-radius:50%;width:20px;height:20px;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 4px rgba(0,0,0,0.2);">
-                                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
-                                    </div>
-                                @endif
+                                <div class="theme-check-badge" style="position:absolute;top:-6px;right:-6px;background:#3b82f6;color:#fff;border-radius:50%;width:20px;height:20px;display:{{ $isSelected ? 'flex' : 'none' }};align-items:center;justify-content:center;box-shadow:0 2px 4px rgba(0,0,0,0.2);">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                                </div>
                             </label>
                         @endforeach
                     </div>
@@ -210,4 +210,26 @@
         </div>
     </div>
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const themeInputs = document.querySelectorAll('.theme-radio-input');
+    themeInputs.forEach(input => {
+        input.addEventListener('change', function() {
+            document.querySelectorAll('.theme-card-option').forEach(card => {
+                const radio = card.querySelector('.theme-radio-input');
+                const box = card.querySelector('.theme-card-box');
+                const badge = card.querySelector('.theme-check-badge');
+                if (radio && radio.checked) {
+                    box.style.borderColor = '#3b82f6';
+                    if (badge) badge.style.display = 'flex';
+                } else {
+                    box.style.borderColor = '#e2e8f0';
+                    if (badge) badge.style.display = 'none';
+                }
+            });
+        });
+    });
+});
+</script>
 @endsection

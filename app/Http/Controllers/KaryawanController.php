@@ -73,6 +73,11 @@ class KaryawanController extends Controller
 
         $data['password'] = Hash::make($data['password']);
 
+        // Jabatan admin & ketua tidak memiliki shift kerja
+        if (in_array($data['jabatan'], ['admin', 'ketua'])) {
+            $data['shift_default_id'] = null;
+        }
+
         if ($request->hasFile('foto_profil')) {
             $data['foto_profil'] = $request->file('foto_profil')
                 ->store('foto-profil', 'public');
@@ -127,6 +132,11 @@ class KaryawanController extends Controller
             $data['password'] = Hash::make($data['password']);
         } else {
             unset($data['password']);
+        }
+
+        // Jabatan admin & ketua tidak memiliki shift kerja
+        if (in_array($data['jabatan'], ['admin', 'ketua'])) {
+            $data['shift_default_id'] = null;
         }
 
         if ($request->hasFile('foto_profil')) {
