@@ -7,6 +7,7 @@
 @if(auth()->user()->canApprove())
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="{{ asset('js/leaflet-helper.js') }}"></script>
 @endif
 
 <div style="max-width:900px;margin:0 auto;display:flex;flex-direction:column;gap:20px;">
@@ -122,8 +123,19 @@
             <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;">
                 {{-- Map Masuk --}}
                 <div>
-                    <h5 style="font-size:12px;font-weight:700;color:#555;margin-bottom:8px;">Peta Lokasi Masuk</h5>
+                    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+                        <h5 style="font-size:12px;font-weight:700;color:#555;margin:0;">Peta Lokasi Masuk</h5>
+                        @if($absensi->latitude_masuk && $absensi->longitude_masuk)
+                        <a href="https://www.google.com/maps?q={{ $absensi->latitude_masuk }},{{ $absensi->longitude_masuk }}" target="_blank" rel="noopener" class="btn btn-secondary btn-xs">🗺️ Google Maps</a>
+                        @endif
+                    </div>
                     @if($absensi->latitude_masuk && $absensi->longitude_masuk)
+                    <div class="map-quick-toolbar">
+                        <span style="color:#64748b;">Layer:</span>
+                        <button type="button" class="map-quick-btn active" onclick="switchDetailMapLayer('masuk', '🗺️ Peta Jalan', this)">🗺️ Jalan</button>
+                        <button type="button" class="map-quick-btn" onclick="switchDetailMapLayer('masuk', '🛰️ Satelit HD', this)">🛰️ Satelit</button>
+                        <button type="button" class="map-quick-btn" onclick="switchDetailMapLayer('masuk', '🏔️ Medan / Topo', this)">🏔️ Medan</button>
+                    </div>
                     <div id="map-detail-masuk" style="height:250px;border-radius:6px;border:1px solid #ddd;z-index:1;"></div>
                     <div style="font-size:11px;color:#666;margin-top:6px;">
                         <strong>Lokasi:</strong> {{ $absensi->lokasi_masuk }}<br>
@@ -138,8 +150,19 @@
 
                 {{-- Map Pulang --}}
                 <div>
-                    <h5 style="font-size:12px;font-weight:700;color:#555;margin-bottom:8px;">Peta Lokasi Pulang</h5>
+                    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+                        <h5 style="font-size:12px;font-weight:700;color:#555;margin:0;">Peta Lokasi Pulang</h5>
+                        @if($absensi->latitude_pulang && $absensi->longitude_pulang)
+                        <a href="https://www.google.com/maps?q={{ $absensi->latitude_pulang }},{{ $absensi->longitude_pulang }}" target="_blank" rel="noopener" class="btn btn-secondary btn-xs">🗺️ Google Maps</a>
+                        @endif
+                    </div>
                     @if($absensi->latitude_pulang && $absensi->longitude_pulang)
+                    <div class="map-quick-toolbar">
+                        <span style="color:#64748b;">Layer:</span>
+                        <button type="button" class="map-quick-btn active" onclick="switchDetailMapLayer('pulang', '🗺️ Peta Jalan', this)">🗺️ Jalan</button>
+                        <button type="button" class="map-quick-btn" onclick="switchDetailMapLayer('pulang', '🛰️ Satelit HD', this)">🛰️ Satelit</button>
+                        <button type="button" class="map-quick-btn" onclick="switchDetailMapLayer('pulang', '🏔️ Medan / Topo', this)">🏔️ Medan</button>
+                    </div>
                     <div id="map-detail-pulang" style="height:250px;border-radius:6px;border:1px solid #ddd;z-index:1;"></div>
                     <div style="font-size:11px;color:#666;margin-top:6px;">
                         <strong>Lokasi:</strong> {{ $absensi->lokasi_pulang }}<br>
@@ -161,17 +184,36 @@
 @if(auth()->user()->canApprove())
 @push('scripts')
 <script>
+let mapMasukObj, mapPulangObj;
+
+function switchDetailMapLayer(type, layerName, btn) {
+    const obj = type === 'masuk' ? mapMasukObj : mapPulangObj;
+    if (!obj || !obj.map || !obj.baseMaps) return;
+    const parent = btn.parentElement;
+    parent.querySelectorAll('.map-quick-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+
+    const targetLayer = obj.baseMaps[layerName];
+    if (targetLayer) {
+        Object.values(obj.baseMaps).forEach(l => {
+            if (obj.map.hasLayer(l)) obj.map.removeLayer(l);
+        });
+        obj.map.addLayer(targetLayer);
+    }
+}
+
 document.addEventListener('DOMContentLoaded', () => {
     @if($absensi->latitude_masuk && $absensi->longitude_masuk)
         try {
             const latMasuk = {{ $absensi->latitude_masuk }};
             const lngMasuk = {{ $absensi->longitude_masuk }};
-            const mapMasuk = L.map('map-detail-masuk').setView([latMasuk, lngMasuk], 15);
-            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                attribution: '&copy; OpenStreetMap'
-            }).addTo(mapMasuk);
-            L.marker([latMasuk, lngMasuk]).addTo(mapMasuk)
-                .bindPopup("Lokasi Absen Masuk: {{ $absensi->user->name }}").openPopup();
+            mapMasukObj = ErpKopdesMap.initMap('map-detail-masuk', [latMasuk, lngMasuk], 16, "🗺️ Peta Jalan");
+            const mapMasuk = mapMasukObj.map;
+
+            const pinIcon = ErpKopdesMap.createKopdesIcon('#16a34a', '📍');
+
+            L.marker([latMasuk, lngMasuk], { icon: pinIcon }).addTo(mapMasuk)
+                .bindPopup("<strong>Lokasi Absen Masuk:</strong><br>{{ $absensi->user->name }}").openPopup();
         } catch (e) {
             console.error('Error loading check-in map:', e);
         }
@@ -181,12 +223,13 @@ document.addEventListener('DOMContentLoaded', () => {
         try {
             const latPulang = {{ $absensi->latitude_pulang }};
             const lngPulang = {{ $absensi->longitude_pulang }};
-            const mapPulang = L.map('map-detail-pulang').setView([latPulang, lngPulang], 15);
-            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                attribution: '&copy; OpenStreetMap'
-            }).addTo(mapPulang);
-            L.marker([latPulang, lngPulang]).addTo(mapPulang)
-                .bindPopup("Lokasi Absen Pulang: {{ $absensi->user->name }}").openPopup();
+            mapPulangObj = ErpKopdesMap.initMap('map-detail-pulang', [latPulang, lngPulang], 16, "🗺️ Peta Jalan");
+            const mapPulang = mapPulangObj.map;
+
+            const pinIcon = ErpKopdesMap.createKopdesIcon('#16a34a', '🏠');
+
+            L.marker([latPulang, lngPulang], { icon: pinIcon }).addTo(mapPulang)
+                .bindPopup("<strong>Lokasi Absen Pulang:</strong><br>{{ $absensi->user->name }}").openPopup();
         } catch (e) {
             console.error('Error loading check-out map:', e);
         }
@@ -196,3 +239,4 @@ document.addEventListener('DOMContentLoaded', () => {
 @endpush
 @endif
 @endsection
+

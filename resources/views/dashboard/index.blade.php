@@ -156,6 +156,7 @@
     @if(auth()->user()->isAdmin())
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="{{ asset('js/leaflet-helper.js') }}"></script>
     @endif
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
@@ -174,6 +175,13 @@
                 <span class="card-title">Peta Sebaran Karyawan (Titik Kopdes)</span>
             </div>
             <div class="card-body" style="padding:16px;">
+                <div class="map-quick-toolbar" id="toolbar-titik">
+                    <span style="color:#64748b;">Layer Peta:</span>
+                    <button type="button" class="map-quick-btn active" onclick="switchMapLayer('titik', '🗺️ Peta Jalan', this)">🗺️ Jalan</button>
+                    <button type="button" class="map-quick-btn" onclick="switchMapLayer('titik', '🛰️ Satelit HD', this)">🛰️ Satelit HD</button>
+                    <button type="button" class="map-quick-btn" onclick="switchMapLayer('titik', '🏔️ Medan / Topo', this)">🏔️ Medan</button>
+                    <button type="button" class="map-quick-btn" onclick="switchMapLayer('titik', '🌙 Mode Gelap', this)">🌙 Mode Gelap</button>
+                </div>
                 <div id="map-sebaran-titik" style="height:320px;border-radius:6px;border:1px solid #ddd;z-index:1;"></div>
             </div>
         </div>
@@ -182,11 +190,19 @@
                 <span class="card-title">Peta Densitas Regional (Zona Provinsi)</span>
             </div>
             <div class="card-body" style="padding:16px;">
+                <div class="map-quick-toolbar" id="toolbar-regional">
+                    <span style="color:#64748b;">Layer Peta:</span>
+                    <button type="button" class="map-quick-btn active" onclick="switchMapLayer('regional', '🗺️ Peta Jalan', this)">🗺️ Jalan</button>
+                    <button type="button" class="map-quick-btn" onclick="switchMapLayer('regional', '🛰️ Satelit HD', this)">🛰️ Satelit HD</button>
+                    <button type="button" class="map-quick-btn" onclick="switchMapLayer('regional', '🏔️ Medan / Topo', this)">🏔️ Medan</button>
+                    <button type="button" class="map-quick-btn" onclick="switchMapLayer('regional', '🌙 Mode Gelap', this)">🌙 Mode Gelap</button>
+                </div>
                 <div id="map-sebaran-regional" style="height:320px;border-radius:6px;border:1px solid #ddd;z-index:1;"></div>
             </div>
         </div>
     </div>
     @endif
+
 
     {{-- Grafik Analitis Grid --}}
     <div style="font-weight:700;font-size:15px;color:#cc0000;margin:24px 0 12px;display:flex;align-items:center;gap:6px;">
@@ -423,138 +439,166 @@
 @if(auth()->user()->isAdmin() || $isBranchManager)
 @push('scripts')
 <script>
+let mapPointObj = null, mapRegObj = null;
+
+function switchMapLayer(type, layerName, btn) {
+    const obj = type === 'titik' ? mapPointObj : mapRegObj;
+    if (!obj || !obj.map || !obj.baseMaps) return;
+    
+    const parent = btn.parentElement;
+    parent.querySelectorAll('.map-quick-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+
+    const targetLayer = obj.baseMaps[layerName];
+    if (targetLayer) {
+        Object.values(obj.baseMaps).forEach(l => {
+            if (obj.map.hasLayer(l)) obj.map.removeLayer(l);
+        });
+        obj.map.addLayer(targetLayer);
+    }
+}
+
 document.addEventListener('DOMContentLoaded', () => {
     // ── 1. Map 1: Point Map ───────────────────────────────────────
     @if(auth()->user()->isAdmin())
     try {
-        const mapPoint = L.map('map-sebaran-titik').setView([-2.5489, 118.0149], 5);
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            attribution: '&copy; OpenStreetMap'
-        }).addTo(mapPoint);
+        if (typeof ErpKopdesMap !== 'undefined') {
+            mapPointObj = ErpKopdesMap.initMap('map-sebaran-titik', [-2.5489, 118.0149], 5, "🗺️ Peta Jalan");
+            const mapPoint = mapPointObj.map;
 
-        const kopdesData = @json($kopdesList);
-        
-        kopdesData.forEach(kop => {
-            const lat = parseFloat(kop.latitude);
-            const lng = parseFloat(kop.longitude);
+            const kopdesData = @json($kopdesList);
             
-            let employeeList = '<ul style="margin:4px 0 0 16px;padding:0;font-size:11px;color:#333;">';
-            if (kop.users && kop.users.length > 0) {
-                kop.users.forEach(u => {
-                    employeeList += `<li>${u.name} (<span style="color:#cc0000;font-weight:600;">${u.jabatan}</span>)</li>`;
-                });
-            } else {
-                employeeList += '<li>Tidak ada karyawan</li>';
-            }
-            employeeList += '</ul>';
+            kopdesData.forEach(kop => {
+                const lat = parseFloat(kop.latitude);
+                const lng = parseFloat(kop.longitude);
+                const empCount = kop.users ? kop.users.length : 0;
+                
+                let employeeList = '<ul style="margin:4px 0 0 16px;padding:0;font-size:11px;color:#333;">';
+                if (kop.users && kop.users.length > 0) {
+                    kop.users.forEach(u => {
+                        employeeList += `<li>${u.name} (<span style="color:#cc0000;font-weight:600;">${u.jabatan}</span>)</li>`;
+                    });
+                } else {
+                    employeeList += '<li>Tidak ada karyawan</li>';
+                }
+                employeeList += '</ul>';
 
-            const popupContent = `
-                <div style="font-size:12px;width:220px;font-family:inherit;">
-                    <strong style="color:#cc0000;font-size:13px;display:block;margin-bottom:2px;">${kop.nama}</strong>
-                    <span style="color:#666;font-size:11px;line-height:1.3;display:block;">${kop.alamat}</span>
-                    <hr style="margin:6px 0;border:none;border-top:1px solid #ddd;">
-                    <strong>Karyawan (${kop.users.length}):</strong>
-                    ${employeeList}
-                    <div style="margin-top:8px;text-align:right;">
-                        <a href="/kopdes/${kop.id}" style="display:inline-block;font-size:11px;font-weight:700;color:#cc0000;text-decoration:none;background:#fff5f5;padding:3px 8px;border-radius:4px;border:1px solid #ffe3e3;">Inspect Detail &rarr;</a>
+                const gmapsUrl = `https://www.google.com/maps?q=${lat},${lng}`;
+
+                const popupContent = `
+                    <div style="font-size:12px;width:240px;font-family:inherit;">
+                        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;">
+                            <strong style="color:#cc0000;font-size:13px;">${kop.nama}</strong>
+                            <span style="background:#fee2e2;color:#991b1b;font-size:10px;font-weight:700;padding:1px 6px;border-radius:10px;">${empCount} Staf</span>
+                        </div>
+                        <span style="color:#666;font-size:11px;line-height:1.3;display:block;">${kop.alamat}</span>
+                        <hr style="margin:6px 0;border:none;border-top:1px solid #ddd;">
+                        <strong>Karyawan Ditugaskan:</strong>
+                        ${employeeList}
+                        <div style="margin-top:10px;display:flex;gap:6px;justify-content:space-between;align-items:center;">
+                            <a href="${gmapsUrl}" target="_blank" rel="noopener" style="font-size:10px;font-weight:600;color:#2563eb;text-decoration:none;background:#eff6ff;padding:3px 8px;border-radius:4px;border:1px solid #bfdbfe;">🗺️ Google Maps</a>
+                            <a href="/kopdes/${kop.id}" style="font-size:11px;font-weight:700;color:#cc0000;text-decoration:none;background:#fff5f5;padding:3px 8px;border-radius:4px;border:1px solid #ffe3e3;">Inspect Detail &rarr;</a>
+                        </div>
                     </div>
-                </div>
-            `;
+                `;
 
-            L.marker([lat, lng]).addTo(mapPoint)
-                .bindPopup(popupContent);
-        });
+                const pinIcon = ErpKopdesMap.createKopdesIcon('#cc0000', empCount > 0 ? empCount : null);
 
-        if (kopdesData.length > 0) {
-            const markers = kopdesData.map(k => L.marker([parseFloat(k.latitude), parseFloat(k.longitude)]));
-            const group = new L.featureGroup(markers);
-            mapPoint.fitBounds(group.getBounds().pad(0.15));
+                L.marker([lat, lng], { icon: pinIcon }).addTo(mapPoint)
+                    .bindPopup(popupContent);
+            });
+
+            if (kopdesData.length > 0) {
+                const markers = kopdesData.map(k => L.marker([parseFloat(k.latitude), parseFloat(k.longitude)]));
+                const group = new L.featureGroup(markers);
+                mapPoint.fitBounds(group.getBounds().pad(0.15));
+            }
         }
-
     } catch (e) {
         console.error('Error loading Point Map:', e);
     }
 
     // ── 2. Map 2: Regional Zonal Map ──────────────────────────────
     try {
-        const mapReg = L.map('map-sebaran-regional').setView([-2.5489, 118.0149], 5);
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            attribution: '&copy; OpenStreetMap'
-        }).addTo(mapReg);
+        if (typeof ErpKopdesMap !== 'undefined') {
+            mapRegObj = ErpKopdesMap.initMap('map-sebaran-regional', [-2.5489, 118.0149], 5, "🗺️ Peta Jalan");
+            const mapReg = mapRegObj.map;
 
-        const provinceCenters = {
-            'Aceh':                  [4.6951,  96.7494],
-            'Sumatera Utara':        [2.1154,  99.5450],
-            'Sumatera Barat':        [-0.7399, 100.8000],
-            'Riau':                  [0.2933,  101.7068],
-            'Kepulauan Riau':        [3.9457,  108.1429],
-            'Jambi':                 [-1.6101, 103.6131],
-            'Sumatera Selatan':      [-3.3194, 103.9144],
-            'Bangka Belitung':       [-2.7411, 106.4406],
-            'Bengkulu':              [-3.7928, 102.2601],
-            'Lampung':               [-4.5585, 105.4068],
-            'DKI Jakarta':           [-6.2088, 106.8456],
-            'Banten':                [-6.4058, 106.0640],
-            'Jawa Barat':            [-6.9147, 107.6098],
-            'Jawa Tengah':           [-7.0051, 110.4381],
-            'DI Yogyakarta':         [-7.7956, 110.3695],
-            'Jawa Timur':            [-7.5360, 112.2384],
-            'Bali':                  [-8.4095, 115.1889],
-            'Nusa Tenggara Barat':   [-8.6529, 117.3616],
-            'Nusa Tenggara Timur':   [-8.6574, 121.0794],
-            'Kalimantan Barat':      [0.4766,  110.6889],
-            'Kalimantan Tengah':     [-1.6815, 113.3824],
-            'Kalimantan Selatan':    [-3.0926, 115.2838],
-            'Kalimantan Timur':      [1.6407,  116.4194],
-            'Kalimantan Utara':      [3.0731,  116.0413],
-            'Sulawesi Utara':        [0.6246,  123.9750],
-            'Sulawesi Tengah':       [-1.4300, 121.4456],
-            'Sulawesi Selatan':      [-3.6687, 119.9740],
-            'Sulawesi Tenggara':     [-4.1448, 122.1746],
-            'Gorontalo':             [0.6999,  122.4467],
-            'Sulawesi Barat':        [-2.8442, 119.2321],
-            'Maluku':                [-3.2385, 130.1453],
-            'Maluku Utara':          [1.5709,  127.8088],
-            'Papua':                 [-4.2699, 138.0804],
-            'Papua Selatan':         [-7.0100, 138.5100],
-            'Papua Tengah':          [-3.9913, 136.3801],
-            'Papua Pegunungan':      [-4.0000, 139.4000],
-        };
+            const provinceCenters = {
+                'Aceh':                  [4.6951,  96.7494],
+                'Sumatera Utara':        [2.1154,  99.5450],
+                'Sumatera Barat':        [-0.7399, 100.8000],
+                'Riau':                  [0.2933,  101.7068],
+                'Kepulauan Riau':        [3.9457,  108.1429],
+                'Jambi':                 [-1.6101, 103.6131],
+                'Sumatera Selatan':      [-3.3194, 103.9144],
+                'Bangka Belitung':       [-2.7411, 106.4406],
+                'Bengkulu':              [-3.7928, 102.2601],
+                'Lampung':               [-4.5585, 105.4068],
+                'DKI Jakarta':           [-6.2088, 106.8456],
+                'Banten':                [-6.4058, 106.0640],
+                'Jawa Barat':            [-6.9147, 107.6098],
+                'Jawa Tengah':           [-7.0051, 110.4381],
+                'DI Yogyakarta':         [-7.7956, 110.3695],
+                'Jawa Timur':            [-7.5360, 112.2384],
+                'Bali':                  [-8.4095, 115.1889],
+                'Nusa Tenggara Barat':   [-8.6529, 117.3616],
+                'Nusa Tenggara Timur':   [-8.6574, 121.0794],
+                'Kalimantan Barat':      [0.4766,  110.6889],
+                'Kalimantan Tengah':     [-1.6815, 113.3824],
+                'Kalimantan Selatan':    [-3.0926, 115.2838],
+                'Kalimantan Timur':      [1.6407,  116.4194],
+                'Kalimantan Utara':      [3.0731,  116.0413],
+                'Sulawesi Utara':        [0.6246,  123.9750],
+                'Sulawesi Tengah':       [-1.4300, 121.4456],
+                'Sulawesi Selatan':      [-3.6687, 119.9740],
+                'Sulawesi Tenggara':     [-4.1448, 122.1746],
+                'Gorontalo':             [0.6999,  122.4467],
+                'Sulawesi Barat':        [-2.8442, 119.2321],
+                'Maluku':                [-3.2385, 130.1453],
+                'Maluku Utara':          [1.5709,  127.8088],
+                'Papua':                 [-4.2699, 138.0804],
+                'Papua Selatan':         [-7.0100, 138.5100],
+                'Papua Tengah':          [-3.9913, 136.3801],
+                'Papua Pegunungan':      [-4.0000, 139.4000],
+            };
 
-        const regData = @json($provinsiList);
-        const regMarkers = [];
-        
-        regData.forEach(reg => {
-            const provName = reg.provinsi;
-            const count = parseInt(reg.count);
-            const center = provinceCenters[provName] || null;
+            const regData = @json($provinsiList);
+            const regMarkers = [];
             
-            if (center) {
-                // Draw circle indicating density
-                const circle = L.circle(center, {
-                    color: '#cc0000',
-                    fillColor: '#cc0000',
-                    fillOpacity: 0.35,
-                    weight: 2,
-                    radius: 40000 + (count * 25000)
-                }).addTo(mapReg);
+            regData.forEach(reg => {
+                const provName = reg.provinsi;
+                const count = parseInt(reg.count);
+                const center = provinceCenters[provName] || null;
+                
+                if (center) {
+                    const circle = L.circle(center, {
+                        color: '#dc2626',
+                        fillColor: '#ef4444',
+                        fillOpacity: 0.4,
+                        weight: 2.5,
+                        radius: 40000 + (count * 25000)
+                    }).addTo(mapReg);
 
-                circle.bindPopup(`
-                    <div style="text-align:center;font-size:12px;font-family:inherit;">
-                        <strong style="color:#555;">Provinsi ${provName}</strong><br>
-                        <span style="font-size:16px;color:#cc0000;font-weight:800;display:block;margin-top:4px;">${count} Koperasi</span>
-                    </div>
-                `);
+                    circle.bindPopup(`
+                        <div style="text-align:center;font-size:12px;font-family:inherit;padding:4px;">
+                            <span style="color:#6b7280;font-size:11px;text-transform:uppercase;font-weight:700;">Provinsi</span>
+                            <strong style="color:#111827;font-size:14px;display:block;margin-top:2px;">${provName}</strong>
+                            <div style="font-size:18px;color:#dc2626;font-weight:800;margin-top:6px;background:#fef2f2;padding:4px 10px;border-radius:6px;display:inline-block;">
+                                ${count} Koperasi
+                            </div>
+                        </div>
+                    `);
 
-                regMarkers.push(L.marker(center));
+                    regMarkers.push(L.marker(center));
+                }
+            });
+
+            if (regMarkers.length > 0) {
+                const group = new L.featureGroup(regMarkers);
+                mapReg.fitBounds(group.getBounds().pad(0.2));
             }
-        });
-
-        if (regMarkers.length > 0) {
-            const group = new L.featureGroup(regMarkers);
-            mapReg.fitBounds(group.getBounds().pad(0.2));
         }
-
     } catch (e) {
         console.error('Error loading Regional Map:', e);
     }
@@ -594,7 +638,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             }
         });
-    } catch (e) { console.error(e); }
+    } catch (e) { console.error('Error loading Chart Provinsi:', e); }
 
     // ── 4. Chart 2: Karyawan per Kopdes ───────────────────────────
     try {
@@ -629,7 +673,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             }
         });
-    } catch (e) { console.error(e); }
+    } catch (e) { console.error('Error loading Chart Kopdes:', e); }
     @endif
 
     // ── 5. Chart 3: Top 5 Karyawan Paling Aktif ─────────────────────
@@ -665,7 +709,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             }
         });
-    } catch (e) { console.error(e); }
+    } catch (e) { console.error('Error loading Chart Aktif:', e); }
 
     // ── 6. Chart 4: Status Kehadiran Global ───────────────────────
     try {
@@ -714,10 +758,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             }
         });
-    } catch (e) { console.error(e); }
+    } catch (e) { console.error('Error loading Chart Kehadiran:', e); }
 });
 </script>
 @endpush
 @endif
+
 
 @endsection

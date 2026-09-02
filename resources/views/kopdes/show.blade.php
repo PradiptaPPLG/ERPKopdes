@@ -6,6 +6,7 @@
 @section('content')
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="{{ asset('js/leaflet-helper.js') }}"></script>
 
 <div style="display:flex;flex-direction:column;gap:20px;max-width:1000px;margin:0 auto;">
 
@@ -78,8 +79,18 @@
         <div class="card">
             <div class="card-header">
                 <span class="card-title">Titik Koordinat GPS</span>
+                <a href="https://www.google.com/maps?q={{ $kopde->latitude }},{{ $kopde->longitude }}" target="_blank" rel="noopener" class="btn btn-secondary btn-xs">
+                    🗺️ Google Maps
+                </a>
             </div>
             <div class="card-body" style="padding:16px;">
+                <div class="map-quick-toolbar">
+                    <span style="color:#64748b;">Layer:</span>
+                    <button type="button" class="map-quick-btn active" onclick="switchKopdesMapLayer('🗺️ Peta Jalan', this)">🗺️ Jalan</button>
+                    <button type="button" class="map-quick-btn" onclick="switchKopdesMapLayer('🛰️ Satelit HD', this)">🛰️ Satelit HD</button>
+                    <button type="button" class="map-quick-btn" onclick="switchKopdesMapLayer('🏔️ Medan / Topo', this)">🏔️ Medan</button>
+                    <button type="button" class="map-quick-btn" onclick="switchKopdesMapLayer('🌙 Mode Gelap', this)">🌙 Mode Gelap</button>
+                </div>
                 <div id="kopdes-map" style="height:270px;border-radius:6px;border:1px solid #ddd;z-index:1;"></div>
             </div>
         </div>
@@ -145,29 +156,61 @@
 
 @push('scripts')
 <script>
+let kopdesMapObj;
+
+function switchKopdesMapLayer(layerName, btn) {
+    if (!kopdesMapObj || !kopdesMapObj.map || !kopdesMapObj.baseMaps) return;
+    const parent = btn.parentElement;
+    parent.querySelectorAll('.map-quick-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+
+    const targetLayer = kopdesMapObj.baseMaps[layerName];
+    if (targetLayer) {
+        Object.values(kopdesMapObj.baseMaps).forEach(l => {
+            if (kopdesMapObj.map.hasLayer(l)) kopdesMapObj.map.removeLayer(l);
+        });
+        kopdesMapObj.map.addLayer(targetLayer);
+    }
+}
+
 document.addEventListener('DOMContentLoaded', () => {
     try {
         const lat = {{ $kopde->latitude }};
         const lng = {{ $kopde->longitude }};
         const radius = {{ $kopde->radius_meter }};
         
-        // Inisialisasi Peta
-        const map = L.map('kopdes-map').setView([lat, lng], 15);
+        // Inisialisasi Peta via ErpKopdesMap
+        kopdesMapObj = ErpKopdesMap.initMap('kopdes-map', [lat, lng], 15, "🗺️ Peta Jalan");
+        const map = kopdesMapObj.map;
         
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-        }).addTo(map);
-        
-        // Tambahkan Marker
-        L.marker([lat, lng]).addTo(map)
-            .bindPopup("<strong>{{ $kopde->nama }}</strong><br>{{ $kopde->alamat }}")
+        // Custom Pin Icon
+        const pinIcon = ErpKopdesMap.createKopdesIcon('#cc0000', '🏢');
+
+        const gmapsUrl = `https://www.google.com/maps?q=${lat},${lng}`;
+        const popupContent = `
+            <div style="font-size:12px;width:220px;font-family:inherit;">
+                <strong style="color:#cc0000;font-size:14px;display:block;margin-bottom:3px;">{{ $kopde->nama }}</strong>
+                <span style="color:#666;font-size:11px;line-height:1.3;display:block;">{{ $kopde->alamat }}</span>
+                <div style="margin-top:6px;font-size:11px;color:#0284c7;font-weight:600;">
+                    Geofence: ${radius} Meter
+                </div>
+                <div style="margin-top:10px;text-align:right;">
+                    <a href="${gmapsUrl}" target="_blank" rel="noopener" style="display:inline-block;font-size:11px;font-weight:700;color:#2563eb;text-decoration:none;background:#eff6ff;padding:3px 8px;border-radius:4px;border:1px solid #bfdbfe;">🗺️ Buka Google Maps</a>
+                </div>
+            </div>
+        `;
+
+        // Marker & Popup
+        L.marker([lat, lng], { icon: pinIcon }).addTo(map)
+            .bindPopup(popupContent)
             .openPopup();
 
-        // Tambahkan Lingkaran Geofence
+        // Lingkaran Geofence
         L.circle([lat, lng], {
-            color: '#cc0000',
-            fillColor: '#f03',
-            fillOpacity: 0.15,
+            color: '#dc2626',
+            fillColor: '#ef4444',
+            fillOpacity: 0.2,
+            weight: 2,
             radius: radius
         }).addTo(map);
             
@@ -178,3 +221,4 @@ document.addEventListener('DOMContentLoaded', () => {
 </script>
 @endpush
 @endsection
+

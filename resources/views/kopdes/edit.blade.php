@@ -6,6 +6,7 @@
 @section('content')
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="{{ asset('js/leaflet-helper.js') }}"></script>
 
 <div style="max-width:1000px;margin:0 auto;display:flex;flex-direction:column;gap:20px;">
     
@@ -70,7 +71,7 @@
                     <div style="display:grid;grid-template-columns:1fr 1.5fr;gap:12px;">
                         <div class="form-group">
                             <label class="form-label">Radius Absen (Meter) <span class="required">*</span></label>
-                            <input type="number" name="radius_meter" id="radius_meter" value="{{ old('radius_meter', $kopde->radius_meter) }}" min="5" class="form-control" placeholder="Contoh: 50" required>
+                            <input type="number" name="radius_meter" id="radius_meter" value="{{ old('radius_meter', $kopde->radius_meter) }}" min="5" class="form-control" placeholder="Contoh: 50" required oninput="updateGeofenceCircle()">
                             @error('radius_meter') <div class="form-error">{{ $message }}</div> @enderror
                         </div>
                         <div class="form-group">
@@ -106,12 +107,20 @@
                         </div>
                     </div>
 
+                    <div class="map-quick-toolbar">
+                        <span style="color:#64748b;">Layer:</span>
+                        <button type="button" class="map-quick-btn active" onclick="switchPickerMapLayer('🗺️ Peta Jalan', this)">🗺️ Jalan</button>
+                        <button type="button" class="map-quick-btn" onclick="switchPickerMapLayer('🛰️ Satelit HD', this)">🛰️ Satelit HD</button>
+                        <button type="button" class="map-quick-btn" onclick="switchPickerMapLayer('🏔️ Medan / Topo', this)">🏔️ Medan</button>
+                        <button type="button" class="map-quick-btn" onclick="switchPickerMapLayer('🌙 Mode Gelap', this)">🌙 Mode Gelap</button>
+                    </div>
+
                     <div style="flex:1;position:relative;min-height:350px;">
                         <div id="map-picker" style="position:absolute;inset:0;border-radius:8px;border:1px solid #ddd;z-index:1;"></div>
                     </div>
                     
                     <div style="font-size:11px;color:#6b7280;line-height:1.4;background:#f9fafb;padding:8px 12px;border-radius:6px;border:1px solid #e5e5e5;">
-                        💡 <strong>Petunjuk:</strong> Anda dapat menggeser (drag) marker merah ke koordinat baru atau menggunakan kolom pencarian untuk memindahkan lokasi Koperasi secara instan.
+                        💡 <strong>Petunjuk:</strong> Anda dapat menggeser (drag) marker merah ke koordinat baru atau menggunakan kolom pencarian untuk memindahkan lokasi Koperasi secara instan. Area geofence akan otomatis ter-update.
                     </div>
                 </div>
 
@@ -123,27 +132,65 @@
 
 @push('scripts')
 <script>
-let map, marker;
+let pickerMapObj, map, marker, geofenceCircle;
 const initialLat = {{ $kopde->latitude }};
 const initialLng = {{ $kopde->longitude }};
 
+function switchPickerMapLayer(layerName, btn) {
+    if (!pickerMapObj || !pickerMapObj.map || !pickerMapObj.baseMaps) return;
+    const parent = btn.parentElement;
+    parent.querySelectorAll('.map-quick-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+
+    const targetLayer = pickerMapObj.baseMaps[layerName];
+    if (targetLayer) {
+        Object.values(pickerMapObj.baseMaps).forEach(l => {
+            if (pickerMapObj.map.hasLayer(l)) pickerMapObj.map.removeLayer(l);
+        });
+        pickerMapObj.map.addLayer(targetLayer);
+    }
+}
+
+function updateGeofenceCircle() {
+    if (!geofenceCircle || !marker) return;
+    const radiusVal = parseFloat(document.getElementById('radius_meter').value) || 50;
+    const currentPos = marker.getLatLng();
+    geofenceCircle.setLatLng(currentPos);
+    geofenceCircle.setRadius(radiusVal);
+}
+
 document.addEventListener('DOMContentLoaded', () => {
     try {
-        // Inisialisasi peta di koordinat awal Kopdes
-        map = L.map('map-picker').setView([initialLat, initialLng], 14);
+        // Inisialisasi peta dengan ErpKopdesMap
+        pickerMapObj = ErpKopdesMap.initMap('map-picker', [initialLat, initialLng], 15, "🗺️ Peta Jalan");
+        map = pickerMapObj.map;
         
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-        }).addTo(map);
-        
-        // Buat marker yang bisa di-drag
+        const pinIcon = ErpKopdesMap.createKopdesIcon('#cc0000', '📍');
+
+        // Marker awal
         marker = L.marker([initialLat, initialLng], {
-            draggable: true
+            draggable: true,
+            icon: pinIcon
         }).addTo(map);
         
-        // Daftarkan event dragend
+        // Geofence circle
+        const initialRadius = parseFloat(document.getElementById('radius_meter').value) || 50;
+        geofenceCircle = L.circle([initialLat, initialLng], {
+            color: '#dc2626',
+            fillColor: '#ef4444',
+            fillOpacity: 0.2,
+            weight: 2,
+            radius: initialRadius
+        }).addTo(map);
+
+        marker.on('drag', function (e) {
+            const pos = marker.getLatLng();
+            geofenceCircle.setLatLng(pos);
+        });
+
         marker.on('dragend', function (e) {
             const position = marker.getLatLng();
+            geofenceCircle.setLatLng(position);
             reverseGeocode(position.lat, position.lng);
         });
         
@@ -171,9 +218,7 @@ async function searchLocation() {
     try {
         const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query)}&format=json&limit=1&addressdetails=1&countrycodes=id`;
         const response = await fetch(url, {
-            headers: {
-                'Accept-Language': 'id'
-            }
+            headers: { 'Accept-Language': 'id' }
         });
         const results = await response.json();
         
@@ -182,11 +227,12 @@ async function searchLocation() {
             const lat = parseFloat(loc.lat);
             const lng = parseFloat(loc.lon);
             
-            // Update Map & Marker
-            map.setView([lat, lng], 15);
+            // Update Map & Marker & Geofence
+            map.setView([lat, lng], 16);
             marker.setLatLng([lat, lng]);
+            geofenceCircle.setLatLng([lat, lng]);
             
-            // Update form fields dengan detail geocoding
+            // Update form fields
             updateFormFields(lat, lng, loc.address);
         } else {
             document.getElementById('search-feedback').style.display = 'block';
@@ -199,14 +245,12 @@ async function searchLocation() {
     }
 }
 
-// Fitur Reverse Geocoding: deteksi detail alamat dari koordinat pin
+// Reverse Geocoding
 async function reverseGeocode(lat, lng) {
     try {
         const url = `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json&addressdetails=1`;
         const response = await fetch(url, {
-            headers: {
-                'Accept-Language': 'id'
-            }
+            headers: { 'Accept-Language': 'id' }
         });
         const result = await response.json();
         
@@ -221,7 +265,6 @@ async function reverseGeocode(lat, lng) {
     }
 }
 
-// Utility untuk mengisi form input secara aman
 function updateFormFields(lat, lng, address) {
     document.getElementById('latitude').value = parseFloat(lat).toFixed(8);
     document.getElementById('longitude').value = parseFloat(lng).toFixed(8);
@@ -249,10 +292,10 @@ function updateFormFields(lat, lng, address) {
         if (kabupaten) generatedAddress += (generatedAddress ? ', ' : '') + kabupaten;
         if (provinsi) generatedAddress += (generatedAddress ? ', ' : '') + provinsi;
         
-        // Suggest alamat ke textarea
         document.getElementById('alamat').value = generatedAddress;
     }
 }
 </script>
 @endpush
 @endsection
+
