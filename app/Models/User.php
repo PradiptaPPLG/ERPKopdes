@@ -17,7 +17,7 @@ class User extends Authenticatable
         'jabatan', 'status', 'foto_profil',
         'tanda_tangan_digital', 'shift_default_id', 'kopdes_id',
         'two_factor_secret', 'two_factor_confirmed_at',
-        'need_password_change', 'recovery_email',
+        'need_password_change', 'recovery_email', 'id_card_theme'
     ];
 
     protected $hidden = ['password', 'remember_token'];
@@ -30,6 +30,7 @@ class User extends Authenticatable
             'tanggal_lahir'           => 'date',
             'two_factor_confirmed_at' => 'datetime',
             'need_password_change'    => 'boolean',
+            'id_card_theme'           => 'integer',
         ];
     }
 
@@ -72,6 +73,53 @@ class User extends Authenticatable
     public function unreadNotifications()
     {
         return $this->hasMany(Notification::class)->where('is_read', false)->latest();
+    }
+
+    // ── Gamifikasi ID Card ───────────────────────────────────────
+    public function getAttendanceCountAttribute(): int
+    {
+        return $this->absensi()->count();
+    }
+
+    public static function getCardTiers(): array
+    {
+        return [
+            1 => ['name' => 'Putih (Default)', 'days' => 0, 'style' => 'background: #ffffff;'],
+            2 => ['name' => 'Coklat', 'days' => 15, 'style' => 'background: linear-gradient(135deg, #a16207 0%, #713f12 100%);'],
+            3 => ['name' => 'Silver', 'days' => 45, 'style' => 'background: linear-gradient(135deg, #94a3b8 0%, #475569 100%);'],
+            4 => ['name' => 'Emas', 'days' => 80, 'style' => 'background: linear-gradient(135deg, #eab308 0%, #a16207 100%);'],
+            5 => ['name' => 'Biru Berlian', 'days' => 100, 'style' => 'background: linear-gradient(135deg, #06b6d4 0%, #0369a1 100%);'],
+            6 => ['name' => 'Ungu', 'days' => 150, 'style' => 'background: linear-gradient(135deg, #a855f7 0%, #6b21a8 100%);'],
+            7 => ['name' => 'Oren', 'days' => 200, 'style' => 'background: linear-gradient(135deg, #f97316 0%, #c2410c 100%);'],
+            8 => ['name' => 'Merah', 'days' => 400, 'style' => 'background: linear-gradient(135deg, #ef4444 0%, #991b1b 100%);'],
+            9 => ['name' => 'Gradasi Merah Biru', 'days' => 600, 'style' => 'background: linear-gradient(135deg, #ef4444 0%, #3b82f6 100%);'],
+            10 => ['name' => 'Peak Cosmic', 'days' => 1000, 'style' => 'background: linear-gradient(45deg, #ff00cc, #3333ff, #ff00cc); background-size: 400% 400%; animation: gradientBG 15s ease infinite;'],
+        ];
+    }
+
+    public function getUnlockedTiersAttribute(): array
+    {
+        $tiers = self::getCardTiers();
+        $unlocked = [];
+        $isAdmin = $this->isAdmin();
+        $attendanceCount = $this->attendance_count;
+
+        foreach ($tiers as $level => $tier) {
+            if ($isAdmin || $attendanceCount >= $tier['days']) {
+                $unlocked[] = $level;
+            }
+        }
+        return $unlocked;
+    }
+
+    public function getCardThemeStyleAttribute(): string
+    {
+        $themeId = $this->id_card_theme ?: 1;
+        $tiers = self::getCardTiers();
+        
+        // Fallback to blue (old default) if theme 1 is somehow empty or fallback to white. 
+        // We'll use the one defined in getCardTiers().
+        return $tiers[$themeId]['style'] ?? $tiers[1]['style'];
     }
 
     // ── Helpers ──────────────────────────────────────────────────
