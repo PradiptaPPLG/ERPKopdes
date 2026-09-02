@@ -153,6 +153,19 @@
                     <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
                 </svg>
             </button>
+            
+            <div style="text-align:center;margin:16px 0;position:relative;">
+                <span style="background:#fff;padding:0 10px;color:#999;font-size:12px;position:relative;z-index:2;">Atau</span>
+                <div style="position:absolute;top:50%;left:0;right:0;height:1px;background:#e2e8f0;z-index:1;"></div>
+            </div>
+
+            <button type="button" onclick="openQrModal()"
+                    class="btn" style="width:100%;justify-content:center;padding:11px;font-size:13px;background:#10b981;color:#fff;font-weight:600;border:none;display:flex;align-items:center;gap:6px;">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm14 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z" />
+                </svg>
+                Sign in with ID Card
+            </button>
 
         </form>
 
@@ -163,6 +176,24 @@
     
     </div>
 
+</div>
+
+{{-- QR Code Scanner Modal --}}
+<div id="qrModal" style="display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.7);backdrop-filter:blur(3px);align-items:center;justify-content:center;">
+    <div style="background:#fff;border-radius:12px;padding:24px;box-shadow:0 20px 60px rgba(0,0,0,0.25);text-align:center;max-width:380px;width:90%;animation:popIn 0.2s ease;">
+        <h3 style="font-size:16px;font-weight:700;color:#1a1a1a;margin-bottom:8px;">Scan ID Card</h3>
+        <p style="font-size:12px;color:#666;margin-bottom:16px;">Arahkan QR Code dari ID Card Anda ke kamera.</p>
+        
+        <div id="qr-reader" style="width:100%;margin-bottom:16px;border-radius:8px;overflow:hidden;"></div>
+        
+        <div id="qrError" style="display:none;font-size:11px;color:#cc0000;margin-bottom:10px;padding:8px;background:#fff3f3;border-radius:6px;border:1px solid #ffcccc;">
+        </div>
+
+        <button type="button" onclick="closeQrModal()"
+                style="font-size:13px;color:#fff;background:#64748b;border:none;padding:10px 24px;border-radius:6px;cursor:pointer;font-weight:600;">
+            Tutup
+        </button>
+    </div>
 </div>
 
 <style>
