@@ -101,11 +101,11 @@ class User extends Authenticatable
     {
         $tiers = self::getCardTiers();
         $unlocked = [];
-        $isAdmin = $this->isAdmin();
+        $isManagerial = $this->isManagerial(); // Admin & Ketua unlock semua tier
         $attendanceCount = $this->attendance_count;
 
         foreach ($tiers as $level => $tier) {
-            if ($isAdmin || $attendanceCount >= $tier['days']) {
+            if ($isManagerial || $attendanceCount >= $tier['days']) {
                 $unlocked[] = $level;
             }
         }
@@ -123,7 +123,21 @@ class User extends Authenticatable
     }
 
     // ── Helpers ──────────────────────────────────────────────────
+
+    /** Hanya jabatan admin (super admin) */
     public function isAdmin(): bool
+    {
+        return $this->jabatan === 'admin';
+    }
+
+    /** Hanya jabatan ketua (manager kopdes) */
+    public function isKetua(): bool
+    {
+        return $this->jabatan === 'ketua';
+    }
+
+    /** Admin ATAU Ketua — untuk logika tier & monitoring */
+    public function isManagerial(): bool
     {
         return in_array($this->jabatan, ['admin', 'ketua']);
     }
@@ -131,6 +145,12 @@ class User extends Authenticatable
     public function canApprove(): bool
     {
         return in_array($this->jabatan, ['admin', 'ketua', 'sekretaris']);
+    }
+
+    /** Jabatan yang tidak memiliki shift kerja */
+    public function hasNoShift(): bool
+    {
+        return in_array($this->jabatan, ['admin', 'ketua']);
     }
 
     public function jabatanLabel(): string
