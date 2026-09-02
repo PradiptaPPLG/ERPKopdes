@@ -313,5 +313,79 @@ document.getElementById('captchaModal').addEventListener('click', function(e) {
 document.addEventListener('keydown', function(e) {
     if (e.key === 'Escape') closeCaptchaModal();
 });
+
+/* ── QR CODE SCANNER ───────────────── */
+let html5QrcodeScanner = null;
+
+function openQrModal() {
+    document.getElementById('qrModal').style.display = 'flex';
+    document.getElementById('qrError').style.display = 'none';
+    
+    if (!html5QrcodeScanner) {
+        // Render scanner
+        html5QrcodeScanner = new Html5QrcodeScanner("qr-reader", { fps: 10, qrbox: 250 });
+        html5QrcodeScanner.render(onScanSuccess, onScanFailure);
+    }
+}
+
+function closeQrModal() {
+    document.getElementById('qrModal').style.display = 'none';
+    if (html5QrcodeScanner) {
+        html5QrcodeScanner.clear().catch(error => {
+            console.error("Failed to clear html5QrcodeScanner. ", error);
+        });
+        html5QrcodeScanner = null;
+    }
+}
+
+async function onScanSuccess(decodedText, decodedResult) {
+    // Stop scanning once successful
+    if (html5QrcodeScanner) {
+        html5QrcodeScanner.clear();
+        html5QrcodeScanner = null;
+    }
+
+    try {
+        const response = await fetch("{{ route('login.qr') }}", {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': '{{ csrf_token() }}'
+            },
+            body: JSON.stringify({ qr_payload: decodedText })
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            window.location.href = data.redirect;
+        } else {
+            const errDiv = document.getElementById('qrError');
+            errDiv.style.display = 'block';
+            errDiv.innerText = data.message;
+            // Re-initialize scanner after failure
+            setTimeout(() => {
+                html5QrcodeScanner = new Html5QrcodeScanner("qr-reader", { fps: 10, qrbox: 250 });
+                html5QrcodeScanner.render(onScanSuccess, onScanFailure);
+            }, 3000);
+        }
+    } catch (e) {
+        console.error("Gagal login via QR:", e);
+        const errDiv = document.getElementById('qrError');
+        errDiv.style.display = 'block';
+        errDiv.innerText = "Terjadi kesalahan koneksi saat login.";
+    }
+}
+
+function onScanFailure(error) {
+    // handle scan failure, usually better to ignore and keep scanning
+    // console.warn(`Code scan error = ${error}`);
+}
+
+// Tutup modal scanner jika klik luar kotak
+document.getElementById('qrModal').addEventListener('click', function(e) {
+    if (e.target === this) closeQrModal();
+});
 </script>
+<script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
 @endsection
