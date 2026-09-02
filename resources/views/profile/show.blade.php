@@ -69,12 +69,20 @@
 
         {{-- Edit Button --}}
         <div style="padding:0 24px 28px;">
-            <a href="{{ route('profile.edit') }}" class="btn" style="width:100%;justify-content:center;padding:10px;border-radius:8px;font-size:13px;background:linear-gradient(135deg, #0e7490 0%, #0284c7 100%);color:#fff;box-shadow:0 4px 12px rgba(14,116,144,0.25);font-weight:600;border:none;display:flex;align-items:center;gap:6px;text-decoration:none;transition:all 0.2s;">
+            <a href="{{ route('profile.edit') }}" class="btn" style="width:100%;justify-content:center;padding:10px;border-radius:8px;font-size:13px;background:linear-gradient(135deg, #0e7490 0%, #0284c7 100%);color:#fff;box-shadow:0 4px 12px rgba(14,116,144,0.25);font-weight:600;border:none;display:flex;align-items:center;gap:6px;text-decoration:none;transition:all 0.2s;margin-bottom:12px;">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
                 </svg>
                 Edit Profil Saya
             </a>
+            
+            <button type="button" onclick="downloadIDCard()" class="btn" style="width:100%;justify-content:center;padding:10px;border-radius:8px;font-size:13px;background:#10b981;color:#fff;font-weight:600;border:none;display:flex;align-items:center;gap:6px;cursor:pointer;transition:all 0.2s;">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                </svg>
+                Download ID Card
+            </button>
+            <p style="font-size:11px;color:#64748b;margin-top:10px;line-height:1.4;">Gunakan QR Code pada ID Card ini untuk login instan tanpa menggunakan password (Sign in with ID Card).</p>
         </div>
     </div>
 
@@ -213,56 +221,46 @@
 
     </div>
 
-    {{-- ID Card Preview Section --}}
-    <div class="card" style="border-radius:24px;box-shadow:0 10px 30px rgba(14,116,144,0.06);border:1px solid #dbeafe;background:#fff;overflow:hidden;text-align:center;padding:0;margin-top:24px;">
-        <div class="card-header" style="background:linear-gradient(90deg, #f8fafc 0%, #f1f5f9 100%);border-bottom:1px solid #e2e8f0;padding:18px 24px;">
-            <span class="card-title" style="font-size:15px;color:#0f172a;font-weight:700;">ID Card & QR Login</span>
-        </div>
-        <div class="card-body" style="padding:24px;display:flex;flex-direction:column;align-items:center;">
-            
-            {{-- ID Card Element to Download --}}
-            <div id="idCardElement" style="width:280px;background:#fff;border-radius:16px;box-shadow:0 8px 25px rgba(0,0,0,0.1);overflow:hidden;border:1px solid #e2e8f0;position:relative;margin-bottom:20px;">
-                {{-- Header --}}
-                <div style="height:100px;background:linear-gradient(135deg, #0e7490 0%, #0284c7 100%);position:relative;border-radius:0 0 50% 50% / 0 0 20px 20px;display:flex;justify-content:center;align-items:flex-start;">
-                </div>
-                {{-- Avatar --}}
-                <div style="position:relative;display:inline-block;margin:-45px auto 10px;z-index:10;">
-                    @if($karyawan->foto_profil)
-                    <img src="{{ asset('storage/' . $karyawan->foto_profil) }}" style="width:90px;height:90px;border-radius:50%;object-fit:cover;border:4px solid #fff;box-shadow:0 4px 10px rgba(0,0,0,0.1);">
-                    @else
-                    <div style="background:linear-gradient(135deg, #e0f2fe 0%, #bae6fd 100%);color:#0284c7;width:90px;height:90px;border-radius:50%;font-size:32px;font-weight:800;display:flex;align-items:center;justify-content:center;border:4px solid #fff;box-shadow:0 4px 10px rgba(0,0,0,0.1);">
-                        {{ strtoupper(substr($karyawan->name,0,1)) }}
-                    </div>
-                    @endif
-                </div>
-                
-                {{-- Info --}}
-                <h3 style="font-size:14px;font-weight:800;color:#0f172a;margin:0 10px 2px;text-transform:uppercase;">{{ $karyawan->name }}</h3>
-                <div style="font-size:11px;font-weight:600;color:#64748b;text-transform:capitalize;font-style:italic;margin-bottom:12px;">{{ $karyawan->jabatanLabel() }}</div>
-                
-                <div style="font-size:12px;color:#334155;font-weight:700;margin-bottom:16px;">
-                    NIK: {{ $karyawan->nik ?? '-' }}
-                </div>
-                
-                {{-- QR Code --}}
-                <div style="margin-bottom:20px;display:flex;justify-content:center;">
-                    <div style="background:#fff;padding:8px;border-radius:8px;border:1px solid #e2e8f0;">
-                        {!! $karyawan->qr_code_svg !!}
-                    </div>
-                </div>
-                
-                <div style="background:#0e7490;color:#fff;font-size:10px;font-weight:700;padding:8px;text-transform:uppercase;">
-                    Koperasi Desa Nasional
-                </div>
-            </div>
+    </div>
 
-            <button type="button" onclick="downloadIDCard()" class="btn" style="width:100%;justify-content:center;padding:10px;border-radius:8px;font-size:13px;background:#10b981;color:#fff;font-weight:600;border:none;display:flex;align-items:center;gap:6px;cursor:pointer;transition:all 0.2s;">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-                </svg>
-                Download ID Card
-            </button>
-            <p style="font-size:11px;color:#64748b;margin-top:10px;">Gunakan QR Code pada ID Card ini untuk login tanpa password (Sign in with ID Card).</p>
+</div>
+
+{{-- Hidden ID Card Element for Download --}}
+<div style="position:absolute; left:-9999px; top:-9999px;">
+    <div id="idCardElement" style="width:280px;background:#fff;border-radius:0;box-shadow:none;overflow:hidden;border:1px solid #e2e8f0;position:relative;">
+        {{-- Header --}}
+        <div style="height:100px;background:linear-gradient(135deg, #0e7490 0%, #0284c7 100%);position:relative;border-radius:0 0 50% 50% / 0 0 20px 20px;display:flex;justify-content:center;align-items:flex-start;">
+        </div>
+        {{-- Avatar --}}
+        <div style="position:relative;display:inline-block;margin:-45px auto 10px;z-index:10;text-align:center;width:100%;">
+            @if($karyawan->foto_profil)
+            <img src="{{ asset('storage/' . $karyawan->foto_profil) }}" style="width:90px;height:90px;border-radius:50%;object-fit:cover;border:4px solid #fff;box-shadow:0 4px 10px rgba(0,0,0,0.1);display:inline-block;">
+            @else
+            <div style="background:linear-gradient(135deg, #e0f2fe 0%, #bae6fd 100%);color:#0284c7;width:90px;height:90px;border-radius:50%;font-size:32px;font-weight:800;display:inline-flex;align-items:center;justify-content:center;border:4px solid #fff;box-shadow:0 4px 10px rgba(0,0,0,0.1);margin:0 auto;">
+                {{ strtoupper(substr($karyawan->name,0,1)) }}
+            </div>
+            @endif
+        </div>
+        
+        {{-- Info --}}
+        <div style="text-align:center;">
+            <h3 style="font-size:14px;font-weight:800;color:#0f172a;margin:0 10px 2px;text-transform:uppercase;">{{ $karyawan->name }}</h3>
+            <div style="font-size:11px;font-weight:600;color:#64748b;text-transform:capitalize;font-style:italic;margin-bottom:12px;">{{ $karyawan->jabatanLabel() }}</div>
+            
+            <div style="font-size:12px;color:#334155;font-weight:700;margin-bottom:16px;">
+                NIK: {{ $karyawan->nik ?? '-' }}
+            </div>
+        </div>
+        
+        {{-- QR Code --}}
+        <div style="margin-bottom:20px;display:flex;justify-content:center;">
+            <div style="background:#fff;padding:8px;border-radius:8px;border:1px solid #e2e8f0;">
+                {!! $karyawan->qr_code_svg !!}
+            </div>
+        </div>
+        
+        <div style="background:#0e7490;color:#fff;font-size:10px;font-weight:700;padding:8px;text-transform:uppercase;text-align:center;">
+            Koperasi Desa Nasional
         </div>
     </div>
 </div>
