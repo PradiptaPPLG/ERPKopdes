@@ -266,4 +266,17 @@
         </div>
     </div>
 </div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script>
+function downloadIDCard() {
+    const element = document.getElementById('idCardElement');
+    html2canvas(element, { scale: 3 }).then(canvas => {
+        const link = document.createElement('a');
+        link.download = 'ID-Card-{{ $karyawan->nik ?? $karyawan->id }}.png';
+        link.href = canvas.toDataURL('image/png');
+        link.click();
+    });
+}
+</script>
 @endsection
