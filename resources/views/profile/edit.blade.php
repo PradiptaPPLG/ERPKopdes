@@ -141,6 +141,62 @@
                     @error('foto_profil') <div class="form-error">{{ $message }}</div> @enderror
                 </div>
 
+                {{-- Section C --}}
+                <div style="font-weight:700;font-size:14px;color:#1e3a8a;margin:24px 0 18px;padding-bottom:8px;border-bottom:1px solid #e2e8f0;display:flex;align-items:center;gap:6px;">
+                    <span style="background:#eff6ff;color:#2563eb;width:24px;height:24px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;border:1px solid #bfdbfe;">C</span>
+                    Kustomisasi ID Card (Gamifikasi)
+                </div>
+
+                <div style="background:#f8fafc;padding:16px;border-radius:8px;border:1px solid #e2e8f0;margin-bottom:20px;">
+                    <div style="font-size:13px;color:#475569;margin-bottom:16px;">
+                        Pilih tema frame ID Card Anda! Tema baru akan terbuka sesuai dengan jumlah absensi harian Anda. 
+                        <strong>(Absensi Anda saat ini: {{ $karyawan->attendance_count }} hari)</strong>
+                    </div>
+
+                    <div style="display:grid;grid-template-columns:repeat(auto-fill, minmax(140px, 1fr));gap:12px;">
+                        @php
+                            $tiers = \App\Models\User::getCardTiers();
+                            $unlocked = $karyawan->unlocked_tiers;
+                            $currentTheme = old('id_card_theme', $karyawan->id_card_theme ?: 1);
+                        @endphp
+                        @foreach($tiers as $level => $tier)
+                            @php
+                                $isUnlocked = in_array($level, $unlocked);
+                            @endphp
+                            <label style="display:block;cursor:{{ $isUnlocked ? 'pointer' : 'not-allowed' }};position:relative;">
+                                <input type="radio" name="id_card_theme" value="{{ $level }}" 
+                                       style="display:none;" 
+                                       {{ !$isUnlocked ? 'disabled' : '' }}
+                                       {{ $currentTheme == $level && $isUnlocked ? 'checked' : '' }}>
+                                
+                                <div style="border: 2px solid {{ $currentTheme == $level && $isUnlocked ? '#3b82f6' : '#e2e8f0' }};
+                                            border-radius: 8px; overflow:hidden; opacity:{{ $isUnlocked ? '1' : '0.5' }};
+                                            transition: all 0.2s;">
+                                    {{-- Preview Banner --}}
+                                    <div style="height:40px;{{ $tier['style'] }}"></div>
+                                    <div style="padding:8px;text-align:center;background:#fff;">
+                                        <div style="font-size:12px;font-weight:700;color:#1e293b;margin-bottom:2px;">{{ $tier['name'] }}</div>
+                                        @if(!$isUnlocked)
+                                            <div style="font-size:10px;color:#ef4444;font-weight:600;display:flex;align-items:center;justify-content:center;gap:4px;">
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+                                                Butuh {{ $tier['days'] }} hari
+                                            </div>
+                                        @else
+                                            <div style="font-size:10px;color:#10b981;font-weight:600;">Terbuka</div>
+                                        @endif
+                                    </div>
+                                </div>
+                                {{-- Checked Indicator --}}
+                                @if($currentTheme == $level && $isUnlocked)
+                                    <div style="position:absolute;top:-6px;right:-6px;background:#3b82f6;color:#fff;border-radius:50%;width:20px;height:20px;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 4px rgba(0,0,0,0.2);">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                                    </div>
+                                @endif
+                            </label>
+                        @endforeach
+                    </div>
+                </div>
+
                 <div style="display:flex;gap:12px;justify-content:flex-end;margin-top:32px;padding-top:20px;border-top:1px solid #e2e8f0;">
                     <a href="{{ route('profile.show') }}" class="btn btn-secondary" style="border-radius:6px;font-weight:600;">Batal</a>
                     <button type="submit" class="btn" style="border-radius:6px;background:linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);color:#fff;box-shadow:0 4px 12px rgba(37,99,235,0.2);font-weight:600;display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border:none;cursor:pointer;">

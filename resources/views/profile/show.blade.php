@@ -9,8 +9,8 @@
     {{-- Left Card: ID Card Style --}}
     <div class="card" style="border-radius:24px;box-shadow:0 10px 30px rgba(14,116,144,0.06);border:1px solid #dbeafe;background:#fff;overflow:hidden;text-align:center;padding:0;">
         
-        {{-- Top Teal-Blue Gradient Header with ID Card Slot --}}
-        <div style="height:135px;background:linear-gradient(135deg, #0e7490 0%, #0284c7 100%);position:relative;border-radius:0 0 50% 50% / 0 0 20px 20px;display:flex;justify-content:center;align-items:flex-start;overflow:hidden;">
+        {{-- Top Dynamic Gamified Header with ID Card Slot --}}
+        <div style="height:135px;{!! $karyawan->card_theme_style !!};position:relative;border-radius:0 0 50% 50% / 0 0 20px 20px;display:flex;justify-content:center;align-items:flex-start;overflow:hidden;">
             {{-- ID Card Notch/Slot --}}
             <div style="width:55px;height:12px;background:#f5f5f5;border-radius:6px;margin-top:14px;border:1px solid rgba(255,255,255,0.25);box-shadow:inset 0 2px 4px rgba(0,0,0,0.12);"></div>
         </div>
@@ -229,7 +229,7 @@
 <div style="position:absolute; left:-9999px; top:-9999px;">
     <div id="idCardElement" style="width:280px;background:#fff;border-radius:0;box-shadow:none;overflow:hidden;border:1px solid #e2e8f0;position:relative;">
         {{-- Header --}}
-        <div style="height:100px;background:linear-gradient(135deg, #0e7490 0%, #0284c7 100%);position:relative;border-radius:0 0 50% 50% / 0 0 20px 20px;display:flex;justify-content:center;align-items:flex-start;">
+        <div style="height:100px;{!! $karyawan->card_theme_style !!};position:relative;border-radius:0 0 50% 50% / 0 0 20px 20px;display:flex;justify-content:center;align-items:flex-start;">
         </div>
         {{-- Avatar --}}
         <div style="position:relative;display:inline-block;margin:-45px auto 10px;z-index:10;text-align:center;width:100%;">
@@ -269,12 +269,42 @@
 <script>
 function downloadIDCard() {
     const element = document.getElementById('idCardElement');
-    html2canvas(element, { scale: 3 }).then(canvas => {
+    
+    // Simpan style asli untuk dikembalikan nanti
+    const originalDisplay = element.parentElement.style.display;
+    const originalPosition = element.parentElement.style.position;
+    const originalLeft = element.parentElement.style.left;
+    
+    // Tampilkan elemen sesaat sebelum html2canvas memprosesnya,
+    // tetap letakkan off-screen atau di bawah index z
+    element.parentElement.style.position = 'fixed';
+    element.parentElement.style.left = '0';
+    element.parentElement.style.top = '0';
+    element.parentElement.style.zIndex = '-9999';
+    element.parentElement.style.opacity = '1';
+
+    html2canvas(element, { scale: 3, useCORS: true, logging: false }).then(canvas => {
         const link = document.createElement('a');
         link.download = 'ID-Card-{{ $karyawan->nik ?? $karyawan->id }}.png';
         link.href = canvas.toDataURL('image/png');
         link.click();
+        
+        // Kembalikan elemen ke kondisi hidden
+        element.parentElement.style.position = originalPosition;
+        element.parentElement.style.left = originalLeft;
+        element.parentElement.style.top = '';
+        element.parentElement.style.zIndex = '';
+    }).catch(err => {
+        console.error("Gagal mendownload ID card:", err);
     });
 }
 </script>
+
+<style>
+@keyframes gradientBG {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+}
+</style>
 @endsection
