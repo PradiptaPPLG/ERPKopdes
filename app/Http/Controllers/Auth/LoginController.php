@@ -156,6 +156,49 @@ class LoginController extends Controller
         Cache::put($stepKey, $currentStep + 1, now()->addDay());
     }
 
+    public function loginQr(Request $request)
+    {
+        $payload = $request->input('qr_payload');
+        
+        if (!$payload) {
+            return response()->json(['success' => false, 'message' => 'QR Code tidak terdeteksi.']);
+        }
+
+        $parts = explode('|', $payload);
+        if (count($parts) !== 3 || $parts[0] !== 'qrlogin') {
+            return response()->json(['success' => false, 'message' => 'Format QR Code tidak valid.']);
+        }
+
+        $userId = $parts[1];
+        $hash = $parts[2];
+
+        $user = \App\Models\User::find($userId);
+        if (!$user) {
+            return response()->json(['success' => false, 'message' => 'Pengguna tidak ditemukan.']);
+        }
+
+        if ($user->status === 'nonaktif') {
+            return response()->json(['success' => false, 'message' => 'Akun Anda telah dinonaktifkan.']);
+        }
+
+        // Verify Hash
+        $secret = config('app.key');
+        $expectedHash = hash_hmac('sha256', $user->nik ?? $user->email, $secret);
+
+        if (!hash_equals($expectedHash, $hash)) {
+            return response()->json(['success' => false, 'message' => 'QR Code tidak valid atau telah dimanipulasi.']);
+        }
+
+        // Bypass everything and log in
+        Auth::login($user);
+
+        $request->session()->regenerate();
+        Cache::put('user_session_' . $user->id, $request->session()->getId());
+        LogAktivitas::catat('login', "User {$user->name} ({$user->jabatan}) login ke sistem via QR Code.");
+
+        return response()->json(['success' => true, 'redirect' => route('dashboard')]);
+    }
+
     public function logout(Request $request)
     {
         $user = Auth::user();

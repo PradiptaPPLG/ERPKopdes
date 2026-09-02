@@ -107,4 +107,24 @@ class User extends Authenticatable
     {
         return !is_null($this->two_factor_secret) && !is_null($this->two_factor_confirmed_at);
     }
+
+    // ── QR Code Login ────────────────────────────────────────────
+    public function getQrLoginPayloadAttribute(): string
+    {
+        // Format: qrlogin|{user_id}|{hmac_hash}
+        // hmac_hash = hash_hmac('sha256', NIK, APP_KEY)
+        $secret = config('app.key');
+        $hash = hash_hmac('sha256', $this->nik ?? $this->email, $secret);
+        return 'qrlogin|' . $this->id . '|' . $hash;
+    }
+
+    public function getQrCodeSvgAttribute(): string
+    {
+        $renderer = new \BaconQrCode\Renderer\ImageRenderer(
+            new \BaconQrCode\Renderer\RendererStyle\RendererStyle(150, 0),
+            new \BaconQrCode\Renderer\Image\SvgImageBackEnd()
+        );
+        $writer = new \BaconQrCode\Writer($renderer);
+        return $writer->writeString($this->qr_login_payload);
+    }
 }
