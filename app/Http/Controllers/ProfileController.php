@@ -56,6 +56,7 @@ class ProfileController extends Controller
             'alamat'         => ['nullable', 'string'],
             'no_hp'          => ['nullable', 'string', 'max:13'],
             'foto_profil'    => ['nullable', 'image', 'max:2048'],
+            'id_card_theme'  => ['nullable', 'integer'],
         ], [
             'nik.size'              => 'NIK harus 16 digit.',
             'email.unique'          => 'Email sudah digunakan.',
@@ -69,6 +70,14 @@ class ProfileController extends Controller
                 Storage::disk('public')->delete($user->foto_profil);
             }
             $data['foto_profil'] = $request->file('foto_profil')->store('foto-profil', 'public');
+        }
+
+        // Validate id_card_theme unlocking
+        if (isset($data['id_card_theme'])) {
+            $unlockedTiers = $user->unlocked_tiers;
+            if (!in_array($data['id_card_theme'], $unlockedTiers)) {
+                $data['id_card_theme'] = $user->id_card_theme ?: 1; // Revert to current if tampering
+            }
         }
 
         $user->update($data);
