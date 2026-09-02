@@ -196,6 +196,142 @@
     </div>
 </div>
 
+{{-- Unified Forgot Password Modal --}}
+@if(isset($recoveryStep))
+<div id="recoveryModal" style="position:fixed;inset:0;z-index:9999;background:rgba(15, 23, 42, 0.4);backdrop-filter:blur(8px);display:flex;align-items:center;justify-content:center;padding:20px;">
+    <div style="background:#fff;border-radius:16px;width:100%;max-width:460px;box-shadow:0 20px 60px rgba(0,0,0,0.15);overflow:hidden;animation:popIn 0.2s ease;border:1px solid #e2e8f0;">
+        
+        {{-- Header --}}
+        <div style="background:#f8fafc;padding:20px 24px;border-bottom:1px solid #e2e8f0;display:flex;justify-content:space-between;align-items:center;">
+            <div>
+                <h3 style="font-size:16px;font-weight:700;color:#0f172a;margin:0;">Pemulihan Akun</h3>
+                <p style="font-size:11px;color:#64748b;margin:2px 0 0;">
+                    @if($recoveryStep === 'email') Langkah 1 dari 4: Identifikasi @endif
+                    @if($recoveryStep === 'method') Langkah 2 dari 4: Pilih Metode @endif
+                    @if($recoveryStep === 'otp') Langkah 3 dari 4: Verifikasi @endif
+                    @if($recoveryStep === 'reset') Langkah 4 dari 4: Reset @endif
+                </p>
+            </div>
+            <a href="{{ route('login') }}" style="color:#94a3b8;text-decoration:none;font-size:24px;line-height:1;padding:0 8px;">&times;</a>
+        </div>
+        
+        <div style="padding:24px;">
+            @if(session('error'))
+                <div style="background:#fef2f2;border-left:4px solid #ef4444;padding:12px;margin-bottom:16px;border-radius:4px;color:#b91c1c;font-size:13px;">{{ session('error') }}</div>
+            @endif
+            @if($errors->any())
+                <div style="background:#fef2f2;border-left:4px solid #ef4444;padding:12px;margin-bottom:16px;border-radius:4px;">
+                    @foreach($errors->all() as $err)
+                        <div style="color:#b91c1c;font-size:12px;">{{ $err }}</div>
+                    @endforeach
+                </div>
+            @endif
+            
+            {{-- STEP 1: EMAIL --}}
+            @if($recoveryStep === 'email')
+                <p style="font-size:13px;color:#475569;margin-bottom:20px;line-height:1.5;">Masukkan alamat email utama yang terdaftar pada akun Anda untuk memulai proses pemulihan.</p>
+                <form method="POST" action="{{ route('password.forgot.submit') }}">
+                    @csrf
+                    <div style="margin-bottom:16px;">
+                        <label style="display:block;font-size:12px;font-weight:600;color:#475569;margin-bottom:6px;">Email Akun</label>
+                        <input type="email" name="email" value="{{ old('email') }}" style="width:100%;padding:10px 14px;border:1px solid #cbd5e1;border-radius:8px;font-size:14px;outline:none;" placeholder="nama@kopdes.id" required autofocus>
+                    </div>
+                    <button type="submit" style="width:100%;padding:12px;background:#0f172a;color:#fff;border:none;border-radius:8px;font-weight:600;cursor:pointer;font-size:14px;">Cari Akun Saya</button>
+                </form>
+            @endif
+
+            {{-- STEP 2: METHOD --}}
+            @if($recoveryStep === 'method')
+                <p style="font-size:13px;color:#475569;margin-bottom:20px;line-height:1.5;">Pilih ke mana kami harus mengirimkan kode OTP 6 digit untuk verifikasi identitas Anda.</p>
+                <form method="POST" action="{{ route('password.otp.send') }}">
+                    @csrf
+                    
+                    {{-- Primary Option --}}
+                    <label style="display:flex;align-items:flex-start;gap:14px;padding:16px;border:2px solid #3b82f6;border-radius:12px;cursor:pointer;margin-bottom:12px;background:#eff6ff;">
+                        <input type="radio" name="method" value="primary" checked style="margin-top:4px;">
+                        <div style="flex:1;">
+                            <strong style="display:block;font-size:14px;color:#1e3a8a;margin-bottom:2px;">Opsi 1: Email Utama</strong>
+                            <span style="font-size:12px;color:#475569;">Kirim kode ke <strong>{{ $maskedPrimary ?? '' }}</strong></span>
+                        </div>
+                    </label>
+
+                    {{-- Recovery Option --}}
+                    @if(isset($maskedRecovery) && $maskedRecovery)
+                        <label style="display:flex;align-items:flex-start;gap:14px;padding:16px;border:2px solid #e2e8f0;border-radius:12px;cursor:pointer;margin-bottom:12px;">
+                            <input type="radio" name="method" value="recovery" style="margin-top:4px;">
+                            <div style="flex:1;">
+                                <strong style="display:block;font-size:14px;color:#0f172a;margin-bottom:2px;">Opsi 2: Email Pemulihan</strong>
+                                <span style="font-size:12px;color:#475569;">Kirim kode ke <strong>{{ $maskedRecovery }}</strong></span>
+                            </div>
+                        </label>
+                    @else
+                        <div style="display:flex;align-items:flex-start;gap:14px;padding:16px;border:2px solid #e2e8f0;border-radius:12px;margin-bottom:12px;opacity:0.6;">
+                            <input type="radio" disabled style="margin-top:4px;">
+                            <div style="flex:1;">
+                                <strong style="display:block;font-size:14px;color:#0f172a;margin-bottom:2px;">Opsi 2: Email Pemulihan <span style="font-size:10px;background:#e2e8f0;padding:2px 6px;border-radius:4px;margin-left:6px;">Belum Diatur</span></strong>
+                                <span style="font-size:12px;color:#475569;">Email pemulihan tidak tersedia untuk akun ini.</span>
+                            </div>
+                        </div>
+                    @endif
+
+                    <button type="submit" style="width:100%;padding:12px;background:#0f172a;color:#fff;border:none;border-radius:8px;font-weight:600;cursor:pointer;font-size:14px;margin-top:8px;">Kirim Kode OTP</button>
+                </form>
+            @endif
+
+            {{-- STEP 3: OTP --}}
+            @if($recoveryStep === 'otp')
+                <p style="font-size:13px;color:#475569;margin-bottom:20px;line-height:1.5;">Kami telah mengirimkan 6 digit kode OTP ke <strong>{{ $maskedDest ?? '' }}</strong>. Silakan masukkan kode tersebut di bawah ini.</p>
+                <form method="POST" action="{{ route('password.otp.check') }}">
+                    @csrf
+                    <div style="margin-bottom:16px;">
+                        <input type="text" name="otp" style="width:100%;padding:14px;border:1px solid #cbd5e1;border-radius:8px;font-size:24px;letter-spacing:8px;text-align:center;font-weight:700;outline:none;" maxlength="6" autocomplete="off" required autofocus>
+                    </div>
+                    <button type="submit" style="width:100%;padding:12px;background:#0f172a;color:#fff;border:none;border-radius:8px;font-weight:600;cursor:pointer;font-size:14px;">Verifikasi OTP</button>
+                </form>
+            @endif
+
+            {{-- STEP 4: RESET --}}
+            @if($recoveryStep === 'reset')
+                <p style="font-size:13px;color:#475569;margin-bottom:20px;line-height:1.5;">Buat password baru yang kuat untuk mengamankan akun Anda.</p>
+                <form method="POST" action="{{ route('password.reset.submit') }}">
+                    @csrf
+                    <div style="margin-bottom:16px;">
+                        <label style="display:block;font-size:12px;font-weight:600;color:#475569;margin-bottom:6px;">Password Baru</label>
+                        <input type="password" name="password" style="width:100%;padding:10px 14px;border:1px solid #cbd5e1;border-radius:8px;font-size:14px;outline:none;" placeholder="Minimal 8 karakter..." required autofocus>
+                    </div>
+                    <div style="margin-bottom:20px;">
+                        <label style="display:block;font-size:12px;font-weight:600;color:#475569;margin-bottom:6px;">Konfirmasi Password</label>
+                        <input type="password" name="password_confirmation" style="width:100%;padding:10px 14px;border:1px solid #cbd5e1;border-radius:8px;font-size:14px;outline:none;" placeholder="Ulangi password baru..." required>
+                    </div>
+                    <button type="submit" style="width:100%;padding:12px;background:#0f172a;color:#fff;border:none;border-radius:8px;font-weight:600;cursor:pointer;font-size:14px;">Simpan Password Baru</button>
+                </form>
+            @endif
+
+        </div>
+    </div>
+</div>
+<script>
+    // Simple script to toggle radio button active state styles
+    const radios = document.querySelectorAll('input[name="method"]');
+    radios.forEach(radio => {
+        radio.addEventListener('change', function() {
+            document.querySelectorAll('input[name="method"]').forEach(r => {
+                const label = r.closest('label');
+                if (label) {
+                    label.style.border = '2px solid #e2e8f0';
+                    label.style.background = 'transparent';
+                }
+            });
+            const label = this.closest('label');
+            if (label) {
+                label.style.border = '2px solid #3b82f6';
+                label.style.background = '#eff6ff';
+            }
+        });
+    });
+</script>
+@endif
+
 <style>
 @keyframes spin   { to { transform: rotate(360deg); } }
 @keyframes popIn  { from { transform: scale(0.85); opacity:0; } to { transform: scale(1); opacity:1; } }

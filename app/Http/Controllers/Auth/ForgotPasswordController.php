@@ -16,7 +16,7 @@ class ForgotPasswordController extends Controller
     // ── Step 1: Show email lookup form ───────────────────────────
     public function showEmailForm()
     {
-        return view('auth.forgot-password');
+        return view('auth.login', ['recoveryStep' => 'email']);
     }
 
     // ── Step 2: Verify the email, show OTP option chooser ────────
@@ -39,7 +39,12 @@ class ForgotPasswordController extends Controller
         // Store user ID in session for next steps
         session(['otp_user_id' => $user->id]);
 
-        return view('auth.otp-choose-method', compact('maskedPrimary', 'maskedRecovery', 'user'));
+        return view('auth.login', [
+            'recoveryStep' => 'method',
+            'maskedPrimary' => $maskedPrimary,
+            'maskedRecovery' => $maskedRecovery,
+            'user' => $user
+        ]);
     }
 
     // ── Step 3: Send OTP to chosen destination ───────────────────
@@ -95,7 +100,10 @@ class ForgotPasswordController extends Controller
         }
 
         $maskedDest = session('otp_dest_masked', '***@***.***');
-        return view('auth.otp-verify', compact('maskedDest'));
+        return view('auth.login', [
+            'recoveryStep' => 'otp',
+            'maskedDest' => $maskedDest
+        ]);
     }
 
     // ── Step 5: Verify OTP code ───────────────────────────────────
@@ -130,7 +138,7 @@ class ForgotPasswordController extends Controller
             return redirect()->route('password.forgot');
         }
 
-        return view('auth.reset-password');
+        return view('auth.login', ['recoveryStep' => 'reset']);
     }
 
     // ── Step 7: Save new password ─────────────────────────────────
