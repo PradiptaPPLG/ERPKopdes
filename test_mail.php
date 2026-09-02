@@ -5,10 +5,11 @@ $kernel = $app->make(Illuminate\Contracts\Console\Kernel::class);
 $kernel->bootstrap();
 
 try {
-    $mail = new \App\Mail\SendOtpMail('123456', 'Test User', 'forgot_password');
-    Illuminate\Support\Facades\Mail::to('pradipta02032009@gmail.com')->send($mail);
-    echo "MAIL SENT SUCCESSFULLY\n";
+    $user = \App\Models\User::first();
+    echo "Sending OTP to: " . $user->email . "\n";
+    $otp = '123456';
+    Illuminate\Support\Facades\Mail::to($user->email)->send(new \App\Mail\SendOtpMail($otp, $user->name, 'forgot_password'));
+    echo "MAIL SENT SUCCESSFULLY TO " . $user->email . "\n";
 } catch (\Exception $e) {
     echo "MAIL EXCEPTION: " . $e->getMessage() . "\n";
 }
-
