@@ -52,19 +52,26 @@
                     </a>
                 </div>
 
-                <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;background:#f8fafc;padding:16px;border-radius:8px;border:1px solid #e2e8f0;margin-bottom:20px;">
+                <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;background:#f8fafc;padding:16px;border-radius:8px;border:1px solid #e2e8f0;margin-bottom:20px;">
                     <div>
                         <label class="form-label" style="color:#475569;">Jabatan / Role</label>
                         <div style="font-weight:700;color:#1e293b;font-size:13px;">
                             {{ $karyawan->jabatanLabel() }}
-                            <span style="font-size:10px;color:#64748b;font-weight:normal;display:block;margin-top:2px;">(Hanya dapat diubah oleh Administrator)</span>
+                            <span style="font-size:10px;color:#64748b;font-weight:normal;display:block;margin-top:2px;">(Diatur oleh Admin)</span>
+                        </div>
+                    </div>
+                    <div>
+                        <label class="form-label" style="color:#475569;">Kopdes Naungan</label>
+                        <div style="font-weight:700;color:#0284c7;font-size:13px;">
+                            {{ $karyawan->kopdes?->nama ?? 'Pusat / Semua Kopdes' }}
+                            <span style="font-size:10px;color:#64748b;font-weight:normal;display:block;margin-top:2px;">(Diatur oleh Admin)</span>
                         </div>
                     </div>
                     <div>
                         <label class="form-label" style="color:#475569;">Status Kepegawaian</label>
                         <div style="font-weight:700;color:#1e293b;font-size:13px;">
                             {{ ucfirst($karyawan->status) }}
-                            <span style="font-size:10px;color:#64748b;font-weight:normal;display:block;margin-top:2px;">(Hanya dapat diubah oleh Administrator)</span>
+                            <span style="font-size:10px;color:#64748b;font-weight:normal;display:block;margin-top:2px;">(Diatur oleh Admin)</span>
                         </div>
                     </div>
                 </div>
