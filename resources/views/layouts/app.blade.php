@@ -233,7 +233,12 @@
                 <button type="button" class="dropdown-toggle" style="display:flex;align-items:center;gap:10px;background:none;border:none;cursor:pointer;padding:4px 8px;border-radius:8px;transition:background 0.15s;text-align:left;">
                     <div style="text-align:right;">
                         <div style="font-size:13px;font-weight:600;color:#1a1a1a;">{{ auth()->user()->name }}</div>
-                        <div style="font-size:11px;color:#888;">{{ auth()->user()->jabatanLabel() }}</div>
+                        <div style="font-size:11px;color:#888;">
+                            {{ auth()->user()->jabatanLabel() }}
+                            @if(auth()->user()->kopdes)
+                                <span style="color:#0284c7;font-weight:600;"> &bull; {{ auth()->user()->kopdes->nama }}</span>
+                            @endif
+                        </div>
                     </div>
                     @if(auth()->user()->foto_profil)
                     <img src="{{ Storage::url(auth()->user()->foto_profil) }}" alt="" class="avatar" style="border: 2px solid #fff; box-shadow: 0 2px 8px rgba(0,0,0,0.08);">

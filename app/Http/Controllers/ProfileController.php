@@ -19,6 +19,7 @@ class ProfileController extends Controller
         $karyawan = auth()->user();
         $karyawan->load([
             'shiftDefault',
+            'kopdes',
             'absensi' => fn($q) => $q->latest()->take(10),
             'izinCuti' => fn($q) => $q->latest()->take(5)
         ]);

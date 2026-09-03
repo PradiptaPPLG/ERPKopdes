@@ -46,6 +46,10 @@
             <div style="color:#94a3b8;">:</div>
             <div style="color:#334155;font-weight:500;">{{ $karyawan->nik ?? '-' }}</div>
 
+            <div style="font-weight:700;color:#1e293b;">KOPDES</div>
+            <div style="color:#94a3b8;">:</div>
+            <div style="color:#0284c7;font-weight:700;">{{ $karyawan->kopdes?->nama ?? 'Pusat / Semua Kopdes' }}</div>
+
             <div style="font-weight:700;color:#1e293b;">STATUS</div>
             <div style="color:#94a3b8;">:</div>
             <div>
@@ -151,6 +155,10 @@
             </div>
             <div class="card-body" style="padding:24px;">
                 <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;font-size:13px;">
+                    <div style="background:#f8fafc;padding:14px 18px;border-radius:8px;border:1px solid #e2e8f0;transition:all 0.2s;">
+                        <span style="color:#64748b;display:block;font-size:11px;font-weight:600;text-transform:uppercase;margin-bottom:4px;letter-spacing:0.3px;">Kopdes Naungan</span>
+                        <strong style="color:#0284c7;font-size:13px;">{{ $karyawan->kopdes?->nama ?? 'Pusat / Semua Kopdes' }}</strong>
+                    </div>
                     <div style="background:#f8fafc;padding:14px 18px;border-radius:8px;border:1px solid #e2e8f0;transition:all 0.2s;">
                         <span style="color:#64748b;display:block;font-size:11px;font-weight:600;text-transform:uppercase;margin-bottom:4px;letter-spacing:0.3px;">Tempat, Tanggal Lahir</span>
                         <strong style="color:#1e293b;font-size:13px;">{{ $karyawan->tempat_lahir ?? '-' }}, {{ $karyawan->tanggal_lahir?->format('d F Y') ?? '-' }}</strong>
@@ -260,7 +268,7 @@
         </div>
         
         <div style="background:#0e7490;color:#fff;font-size:10px;font-weight:700;padding:8px;text-transform:uppercase;text-align:center;">
-            Koperasi Desa Nasional
+            {{ $karyawan->kopdes?->nama ?? 'Koperasi Desa Nasional' }}
         </div>
     </div>
 </div>
