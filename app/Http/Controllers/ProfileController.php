@@ -51,7 +51,7 @@ class ProfileController extends Controller
             'nik'            => ['nullable', 'string', 'size:16', Rule::unique('users', 'nik')->ignore($user->id)],
             'nip'            => ['nullable', 'string', 'max:20', Rule::unique('users', 'nip')->ignore($user->id)],
             'tempat_lahir'   => ['nullable', 'string', 'max:50'],
-            'tanggal_lahir'  => ['nullable', 'date'],
+            'tanggal_lahir'  => ['nullable', 'date', 'before_or_equal:' . now()->subYears(17)->format('Y-m-d')],
             'jenis_kelamin'  => ['nullable', Rule::in(['L', 'P'])],
             'agama'          => ['nullable', 'string', 'max:20'],
             'alamat'         => ['nullable', 'string'],
@@ -59,11 +59,12 @@ class ProfileController extends Controller
             'foto_profil'    => ['nullable', 'image', 'max:2048'],
             'id_card_theme'  => ['nullable', 'integer'],
         ], [
-            'nik.size'              => 'NIK harus 16 digit.',
-            'email.unique'          => 'Email sudah digunakan.',
-            'nik.unique'            => 'NIK sudah terdaftar.',
-            'nip.unique'            => 'NIP sudah terdaftar.',
-            'recovery_email.email'  => 'Format email pemulihan tidak valid.',
+            'nik.size'                      => 'NIK harus 16 digit.',
+            'email.unique'                  => 'Email sudah digunakan.',
+            'nik.unique'                    => 'NIK sudah terdaftar.',
+            'nip.unique'                    => 'NIP sudah terdaftar.',
+            'recovery_email.email'          => 'Format email pemulihan tidak valid.',
+            'tanggal_lahir.before_or_equal' => 'Tanggal lahir tidak valid. Usia karyawan minimal harus 17 tahun.',
         ]);
 
         if ($request->hasFile('foto_profil')) {

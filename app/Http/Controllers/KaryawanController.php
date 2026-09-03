@@ -55,7 +55,7 @@ class KaryawanController extends Controller
             'nik'             => ['nullable', 'string', 'size:16', 'unique:users,nik'],
             'nip'             => ['nullable', 'string', 'max:20', 'unique:users,nip'],
             'tempat_lahir'    => ['nullable', 'string', 'max:50'],
-            'tanggal_lahir'   => ['nullable', 'date'],
+            'tanggal_lahir'   => ['nullable', 'date', 'before_or_equal:' . now()->subYears(17)->format('Y-m-d')],
             'jenis_kelamin'   => ['nullable', Rule::in(['L', 'P'])],
             'agama'           => ['nullable', 'string', 'max:20'],
             'alamat'          => ['nullable', 'string'],
@@ -66,9 +66,10 @@ class KaryawanController extends Controller
             'kopdes_id'       => ['nullable', 'exists:kopdes,id'],
             'foto_profil'     => ['nullable', 'image', 'max:2048'],
         ], [
-            'nik.size'   => 'NIK harus 16 digit.',
-            'email.unique' => 'Email sudah digunakan.',
-            'nik.unique' => 'NIK sudah terdaftar.',
+            'nik.size'                      => 'NIK harus 16 digit.',
+            'email.unique'                  => 'Email sudah digunakan.',
+            'nik.unique'                    => 'NIK sudah terdaftar.',
+            'tanggal_lahir.before_or_equal' => 'Tanggal lahir tidak valid. Usia karyawan minimal harus 17 tahun.',
         ]);
 
         $data['password'] = Hash::make($data['password']);
