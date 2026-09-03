@@ -117,7 +117,7 @@ class KaryawanController extends Controller
             'nik'             => ['nullable', 'string', 'size:16', Rule::unique('users', 'nik')->ignore($karyawan->id)],
             'nip'             => ['nullable', 'string', 'max:20', Rule::unique('users', 'nip')->ignore($karyawan->id)],
             'tempat_lahir'    => ['nullable', 'string', 'max:50'],
-            'tanggal_lahir'   => ['nullable', 'date'],
+            'tanggal_lahir'   => ['nullable', 'date', 'before_or_equal:' . now()->subYears(17)->format('Y-m-d')],
             'jenis_kelamin'   => ['nullable', Rule::in(['L', 'P'])],
             'agama'           => ['nullable', 'string', 'max:20'],
             'alamat'          => ['nullable', 'string'],
@@ -127,6 +127,11 @@ class KaryawanController extends Controller
             'shift_default_id' => ['nullable', 'exists:shifts,id'],
             'kopdes_id'       => ['nullable', 'exists:kopdes,id'],
             'foto_profil'     => ['nullable', 'image', 'max:2048'],
+        ], [
+            'nik.size'                      => 'NIK harus 16 digit.',
+            'email.unique'                  => 'Email sudah digunakan.',
+            'nik.unique'                    => 'NIK sudah terdaftar.',
+            'tanggal_lahir.before_or_equal' => 'Tanggal lahir tidak valid. Usia karyawan minimal harus 17 tahun.',
         ]);
 
         if (!empty($data['password'])) {
@@ -381,7 +386,11 @@ class KaryawanController extends Controller
                 $tgl = preg_replace('/[,\/]/', '-', $tanggalLahirRaw);
                 // Pastikan format YYYY-MM-DD valid
                 if (preg_match('/^\d{4}-\d{2}-\d{2}$/', $tgl)) {
-                    $tanggalLahir = $tgl;
+                    if (\Carbon\Carbon::parse($tgl)->gt(now()->subYears(17))) {
+                        $gagal[] = "Baris {$baris}: tanggal_lahir '{$tanggalLahirRaw}' menyebabkan usia kurang dari 17 tahun (minimal 17 tahun). Kolom tanggal dikosongkan.";
+                    } else {
+                        $tanggalLahir = $tgl;
+                    }
                 } else {
                     $gagal[] = "Baris {$baris}: format tanggal_lahir '{$tanggalLahirRaw}' tidak dikenal, gunakan YYYY-MM-DD (contoh: 2009-02-23). Kolom tanggal dikosongkan.";
                 }
