@@ -117,7 +117,8 @@
                     </div>
                     <div class="form-group">
                         <label class="form-label">Tanggal Lahir</label>
-                        <input type="date" name="tanggal_lahir" value="{{ old('tanggal_lahir', $karyawan->tanggal_lahir?->format('Y-m-d')) }}" class="form-control">
+                        <input type="date" name="tanggal_lahir" value="{{ old('tanggal_lahir', $karyawan->tanggal_lahir?->format('Y-m-d')) }}" class="form-control" max="{{ now()->subYears(17)->format('Y-m-d') }}">
+                        @error('tanggal_lahir') <div class="form-error">{{ $message }}</div> @enderror
                     </div>
                 </div>
 
